@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:segment_display/segment_display.dart';
 
 class ControlButtons extends StatefulWidget {
   const ControlButtons({Key? key}) : super(key: key);
@@ -37,22 +38,89 @@ class _ControlButtonsState extends State<ControlButtons> {
                         child: Column(children: [
                           Spacer(),
                           Padding(
-                              padding: EdgeInsets.only(
-                                  right: widthConstraints! * 0.237),
-                              child: Container(
-                                  width: widthConstraints! * 0.83,
-                                  height: heightConstraints! * 0.533,
-                                  color: Colors.blueGrey,
-                                  child: Padding(
-                                      padding: EdgeInsets.all(10.0),
-                                      child: TextButton(
-                                        style: ButtonStyle(
-                                            backgroundColor:
-                                                MaterialStateProperty.all(
-                                                    Colors.red)),
-                                        onPressed: () {},
-                                        child: Text('START'),
-                                      ))))
+                            padding: EdgeInsets.only(
+                                right: widthConstraints! * 0.237),
+                            child: Container(
+                                width: widthConstraints! * 0.83,
+                                height: heightConstraints! * 0.533,
+                                child: TextButton(
+                                  onPressed: () {
+                                    print('START');
+                                  },
+                                  style: ButtonStyle(
+                                      elevation:
+                                          MaterialStateProperty.all<double?>(
+                                              10),
+                                      shape: MaterialStateProperty.all<
+                                              RoundedRectangleBorder>(
+                                          RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(18.0),
+                                      )),
+                                      backgroundColor:
+                                          MaterialStateProperty.all(
+                                              Colors.green[600])),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: <Widget>[
+                                      Icon(
+                                        Icons.play_arrow_outlined,
+                                        size: 150,
+                                        color: Colors.white,
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Text(
+                                          'START',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 50.0,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                )), //Card(
+                            //   elevation: 30,
+                            //   color: Colors.green,
+                            //   shape: RoundedRectangleBorder(
+                            //     borderRadius:
+                            //         BorderRadius.all(Radius.circular(10)),
+                            //     side: BorderSide(color: Colors.grey),
+                            //   ),
+                            //   child: InkWell(
+                            //     onTap: () {},
+                            //     child: Container(
+                            //       width: widthConstraints! * 0.83,
+                            //       height: heightConstraints! * 0.533,
+                            //       child: Center(
+                            // child: Column(
+                            //   mainAxisSize: MainAxisSize.min,
+                            //   children: <Widget>[
+                            //     Icon(
+                            //       Icons.play_arrow_outlined,
+                            //       size: 150,
+                            //       color: Colors.white,
+                            //     ),
+                            //     Padding(
+                            //       padding: const EdgeInsets.all(8.0),
+                            //       child: Text(
+                            //         'START',
+                            //         style: TextStyle(
+                            //           color: Colors.white,
+                            //           fontSize: 50.0,
+                            //           fontWeight: FontWeight.bold,
+                            //         ),
+                            //       ),
+                            //     )
+                            //   ],
+                            // ),
+                            //       ),
+                            //     ),
+                            //   ),
+                            // ),
+                          )
                         ])),
                   ),
                   Flexible(
@@ -68,6 +136,8 @@ class _ControlButtonsState extends State<ControlButtons> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     IconButton(
+                                      splashColor: Colors.blue,
+                                      splashRadius: 20,
                                       iconSize: 50,
                                       onPressed: () {},
                                       icon: Icon(
@@ -75,6 +145,8 @@ class _ControlButtonsState extends State<ControlButtons> {
                                       ),
                                     ),
                                     IconButton(
+                                      splashColor: Colors.blue,
+                                      splashRadius: 20,
                                       iconSize: 50,
                                       onPressed: () {},
                                       icon: Icon(
@@ -85,16 +157,18 @@ class _ControlButtonsState extends State<ControlButtons> {
                                 ),
                                 Row(
                                   children: [
-                                    Text(
-                                      '00:00',
-                                      style: TextStyle(fontSize: 50),
-                                    )
+                                    SevenSegmentDisplay(
+                                      value: "00:00",
+                                      size: 8.0,
+                                    ),
                                   ],
                                 ),
                                 Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     IconButton(
+                                      splashColor: Colors.blue,
+                                      splashRadius: 20,
                                       iconSize: 50,
                                       onPressed: () {},
                                       icon: Icon(
@@ -102,6 +176,8 @@ class _ControlButtonsState extends State<ControlButtons> {
                                       ),
                                     ),
                                     IconButton(
+                                      splashColor: Colors.blue,
+                                      splashRadius: 20,
                                       iconSize: 50,
                                       onPressed: () {},
                                       icon: Icon(
@@ -118,17 +194,21 @@ class _ControlButtonsState extends State<ControlButtons> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 IconButton(
+                                  splashColor: Colors.blue,
+                                  splashRadius: 30,
                                   iconSize: 80,
                                   onPressed: () {},
                                   icon: Icon(
-                                    Icons.add_circle_outline_outlined,
+                                    Icons.remove_circle_outline_outlined,
                                   ),
                                 ),
-                                Text(
-                                  '24',
-                                  style: TextStyle(fontSize: 150),
+                                SevenSegmentDisplay(
+                                  value: "24",
+                                  size: 15.0,
                                 ),
                                 IconButton(
+                                  splashColor: Colors.blue,
+                                  splashRadius: 30,
                                   iconSize: 80,
                                   onPressed: () {},
                                   icon: Icon(
@@ -147,11 +227,26 @@ class _ControlButtonsState extends State<ControlButtons> {
                                   children: [
                                     Container(
                                       width: 180,
-                                      height: 80,
-                                      color: Colors.yellow[600],
-                                      child: Icon(
-                                        Icons.volume_up_outlined,
-                                        size: 80,
+                                      height: (heightConstraints! * 0.533) / 2,
+                                      child: ElevatedButton(
+                                        style: ButtonStyle(
+                                            elevation: MaterialStateProperty
+                                                .all<double?>(10),
+                                            shape: MaterialStateProperty.all<
+                                                    RoundedRectangleBorder>(
+                                                RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(18.0),
+                                            )),
+                                            backgroundColor:
+                                                MaterialStateProperty.all(
+                                                    Colors.yellow[600])),
+                                        onPressed: () {},
+                                        child: Icon(
+                                          Icons.volume_up_outlined,
+                                          color: Colors.black,
+                                          size: 80,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -162,15 +257,34 @@ class _ControlButtonsState extends State<ControlButtons> {
                                   children: [
                                     Container(
                                         width: 180,
-                                        height: 80,
-                                        color: Colors.yellow[600],
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Text('14',
-                                                style: TextStyle(fontSize: 65)),
-                                          ],
+                                        height:
+                                            (heightConstraints! * 0.533) / 2,
+                                        child: TextButton(
+                                          onPressed: () {},
+                                          style: ButtonStyle(
+                                              elevation: MaterialStateProperty
+                                                  .all<double?>(10),
+                                              shape: MaterialStateProperty.all<
+                                                      RoundedRectangleBorder>(
+                                                  RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(18.0),
+                                              )),
+                                              backgroundColor:
+                                                  MaterialStateProperty.all(
+                                                      Colors.yellow[600])),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text('14',
+                                                  style: TextStyle(
+                                                      fontSize: 50,
+                                                      color: Colors.black)),
+                                            ],
+                                          ),
                                         )),
                                   ],
                                 ),
@@ -188,22 +302,58 @@ class _ControlButtonsState extends State<ControlButtons> {
                         child: Column(children: [
                           Spacer(),
                           Padding(
-                              padding: EdgeInsets.only(
-                                  left: widthConstraints! * 0.237),
+                            padding: EdgeInsets.only(
+                                left: widthConstraints! * 0.237),
+                            child: Card(
+                              elevation: 30,
+                              color: Colors.blue,
+                              shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(70)),
+                                side: BorderSide(color: Colors.grey),
+                              ),
                               child: Container(
-                                  width: widthConstraints! * 0.83,
-                                  height: heightConstraints! * 0.533,
-                                  color: Colors.blueGrey,
-                                  child: Padding(
-                                      padding: EdgeInsets.all(10.0),
-                                      child: TextButton(
-                                        style: ButtonStyle(
-                                            backgroundColor:
-                                                MaterialStateProperty.all(
-                                                    Colors.red)),
-                                        onPressed: () {},
-                                        child: Text('START'),
-                                      ))))
+                                width: widthConstraints! * 0.83,
+                                height: heightConstraints! * 0.533,
+                                child: InkWell(
+                                  onTap: () {
+                                    //Scaffold.of(context).showSnackBar(
+                                    //SnackBar(content: Text("Selected Item $position")));
+                                    // Navigator.push(
+                                    //   context,
+                                    //   MaterialPageRoute(
+                                    //     builder: (_) => position == 0 ? RemotePage() : HomePage(),
+                                    //     fullscreenDialog: true,
+                                    //   ),
+                                    // );
+                                  },
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: <Widget>[
+                                        Icon(
+                                          Icons.restart_alt_outlined,
+                                          size: 150,
+                                          color: Colors.white,
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Text(
+                                            'RESTART',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 50.0,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          )
                         ])),
                   ),
                 ],
@@ -219,3 +369,5 @@ class _ControlButtonsState extends State<ControlButtons> {
     print('width:${queryData.size.width}, height:${queryData.size.height}');
   }
 }
+
+enum ButtonState { START, PAUSE, RESET }
