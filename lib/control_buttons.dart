@@ -1,5 +1,6 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
-import 'package:stop_watch_timer/stop_watch_timer.dart';
 import 'package:segment_display/segment_display.dart';
 
 class ControlButtons extends StatefulWidget {
@@ -17,32 +18,15 @@ class _ControlButtonsState extends State<ControlButtons> {
   int? currentQuatersClockSeconds;
   int? currentShotClockSeconds;
 
-  final StopWatchTimer _quatersClockTimer =
-      StopWatchTimer(mode: StopWatchMode.countDown, presetMillisecond: 720000);
-  final StopWatchTimer _shotClockTimer =
-      StopWatchTimer(mode: StopWatchMode.countDown, presetMillisecond: 24000);
-
   @override
   void initState() {
     super.initState();
     _startPauseState = ButtonState.START;
-    // _quatersClockTimer.rawTime.listen((value) {
-    //   // print(value);
-    //   currentQuatersClockMiliSeconds = value;
-    // });
-    // _quatersClockTimer.secondTime.listen((value) {
-    //   currentQuatersClockSeconds = value;
-    // });
-    // _shotClockTimer.secondTime.listen((value) {
-    //   currentShotClockSeconds = value;
-    // });
   }
 
   @override
   void dispose() async {
     super.dispose();
-    await _quatersClockTimer.dispose();
-    await _shotClockTimer.dispose();
   }
 
   @override
@@ -107,15 +91,12 @@ class _ControlButtonsState extends State<ControlButtons> {
             onPressed: () async {
               if (_startPauseState == ButtonState.START) {
                 //if press and it's show START in display then run
-                _quatersClockTimer.onExecute.add(StopWatchExecute.start);
-                _shotClockTimer.onExecute.add(StopWatchExecute.start);
+
                 setState(() {
                   _startPauseState = ButtonState.PAUSE;
                 });
               } else if (_startPauseState == ButtonState.PAUSE) {
                 //if press and it's show PAUSE in display then pause
-                _quatersClockTimer.onExecute.add(StopWatchExecute.stop);
-                _shotClockTimer.onExecute.add(StopWatchExecute.stop);
 
                 setState(() {
                   _startPauseState = ButtonState.START;
@@ -185,18 +166,10 @@ class _ControlButtonsState extends State<ControlButtons> {
           child: TextButton(
             onPressed: () {
               if (_startPauseState == ButtonState.START) {
-                _shotClockTimer.onExecute.add(StopWatchExecute.reset);
-              } else {
-                _shotClockTimer.onExecute.add(StopWatchExecute.reset);
-                //                     Reset and
-                _shotClockTimer.onExecute
-                    .add(StopWatchExecute.start); // continue counting.
-              }
-              // _quatersClockTimer.initialPresetTime;
-              // _shotClockTimer.initialPresetTime;
+              } else {}
             },
             style: ButtonStyle(
-                overlayColor: MaterialStateProperty.all(Colors.transparent),
+                overlayColor: MaterialStateProperty.all(Colors.blue[200]),
                 elevation: MaterialStateProperty.all<double?>(10),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
@@ -243,14 +216,7 @@ class _ControlButtonsState extends State<ControlButtons> {
                 splashColor: Colors.green,
                 splashRadius: 20,
                 iconSize: 50,
-                onPressed: () async {
-                  _quatersClockTimer.onExecute.add(StopWatchExecute.stop);
-                  (_quatersClockTimer.rawTime.value <= 660000)
-                      ? _quatersClockTimer.setPresetMinuteTime(1)
-                      : _quatersClockTimer.setPresetMinuteTime(0);
-                  print(_quatersClockTimer.rawTime.value);
-                  _quatersClockTimer.onExecute.add(StopWatchExecute.start);
-                },
+                onPressed: () async {},
                 icon: Icon(
                   Icons.add_circle_outline_outlined,
                 ),
@@ -260,12 +226,7 @@ class _ControlButtonsState extends State<ControlButtons> {
                 splashColor: Colors.red,
                 splashRadius: 20,
                 iconSize: 50,
-                onPressed: () async {
-                  print(_quatersClockTimer.rawTime.value);
-                  (_quatersClockTimer.rawTime.value > 0)
-                      ? _quatersClockTimer.setPresetMinuteTime(-1)
-                      : _quatersClockTimer.setPresetMinuteTime(0);
-                },
+                onPressed: () async {},
                 icon: Icon(
                   Icons.remove_circle_outline_outlined,
                 ),
@@ -274,23 +235,11 @@ class _ControlButtonsState extends State<ControlButtons> {
           ),
           Row(
             children: [
-              StreamBuilder<int>(
-                stream: _quatersClockTimer.rawTime,
-                initialData: _quatersClockTimer.rawTime.value,
-                builder: (context, snap) {
-                  final value = snap.data!;
-                  final displayTime = StopWatchTimer.getDisplayTime(value,
-                      hours: false,
-                      minute: true,
-                      second: true,
-                      milliSecond: false);
-                  return SevenSegmentDisplay(
-                    backgroundColor: Colors.transparent,
-                    value: '$displayTime',
-                    size: 8.0,
-                  );
-                },
-              ),
+              SevenSegmentDisplay(
+                backgroundColor: Colors.transparent,
+                value: '12:00',
+                size: 8.0,
+              )
             ],
           ),
           Column(
@@ -301,12 +250,7 @@ class _ControlButtonsState extends State<ControlButtons> {
                 splashColor: Colors.green,
                 splashRadius: 20,
                 iconSize: 50,
-                onPressed: () async {
-                  print(_quatersClockTimer.rawTime.value);
-                  (_quatersClockTimer.rawTime.value < 720000)
-                      ? _quatersClockTimer.setPresetSecondTime(1)
-                      : _quatersClockTimer.setPresetSecondTime(0);
-                },
+                onPressed: () async {},
                 icon: Icon(
                   Icons.add_circle_outline_outlined,
                 ),
@@ -316,12 +260,7 @@ class _ControlButtonsState extends State<ControlButtons> {
                 splashColor: Colors.red,
                 splashRadius: 20,
                 iconSize: 50,
-                onPressed: () async {
-                  print(_quatersClockTimer.secondTime.value);
-                  (_quatersClockTimer.secondTime.value >= 0)
-                      ? _quatersClockTimer.setPresetSecondTime(-1)
-                      : _quatersClockTimer.setPresetSecondTime(0);
-                },
+                onPressed: () async {},
                 icon: Icon(
                   Icons.remove_circle_outline_outlined,
                 ),
@@ -343,68 +282,24 @@ class _ControlButtonsState extends State<ControlButtons> {
             splashColor: Colors.red,
             splashRadius: 30,
             iconSize: 80,
-            onPressed: () async {
-              _quatersClockTimer.secondTime.listen((value) {
-                print(value);
-              });
-
-              if (_startPauseState == ButtonState.PAUSE) {
-                _shotClockTimer.onExecute.add(StopWatchExecute.stop);
-                (_shotClockTimer.secondTime.value > 0)
-                    ? _shotClockTimer.setPresetTime(mSec: -1000)
-                    : _shotClockTimer.setPresetTime(mSec: 0);
-                // print(_shotClockTimer.secondTime.value);
-                _shotClockTimer.onExecute.add(StopWatchExecute.start);
-              } else {
-                (_shotClockTimer.secondTime.value > 0)
-                    ? _shotClockTimer.setPresetTime(mSec: -1000)
-                    : _shotClockTimer.setPresetTime(mSec: 0);
-                // print(_shotClockTimer.secondTime.value);
-              }
-            },
+            onPressed: () async {},
             icon: Icon(
               Icons.remove_circle_outline_outlined,
             ),
           ),
           // Display
-          StreamBuilder<int>(
-            stream: _shotClockTimer.rawTime,
-            initialData: 0,
-            builder: (context, snap) {
-              final value = snap.data!;
-              final displayTime = StopWatchTimer.getDisplayTime(value,
-                  hours: false,
-                  minute: false,
-                  second: true,
-                  milliSecond: false);
-              return SevenSegmentDisplay(
-                backgroundColor: Colors.transparent,
-                value: '$displayTime',
-                size: 8.0,
-              );
-            },
+          SevenSegmentDisplay(
+            backgroundColor: Colors.transparent,
+            value: '24',
+            size: 8.0,
           ),
+
           // (+) Seconds
           IconButton(
             splashColor: Colors.green,
             splashRadius: 30,
             iconSize: 80,
-            onPressed: () async {
-              if (_startPauseState == ButtonState.PAUSE) {
-                _shotClockTimer.onExecute.add(StopWatchExecute.stop);
-
-                (_shotClockTimer.secondTime.value < 24)
-                    ? _shotClockTimer.setPresetTime(mSec: 1000)
-                    : _shotClockTimer.setPresetTime(mSec: 0);
-                // print(_shotClockTimer.secondTime.value);
-                _shotClockTimer.onExecute.add(StopWatchExecute.start);
-              } else {
-                (_shotClockTimer.secondTime.value < 24)
-                    ? _shotClockTimer.setPresetTime(mSec: 1000)
-                    : _shotClockTimer.setPresetTime(mSec: 0);
-                // print(_shotClockTimer.secondTime.value);
-              }
-            },
+            onPressed: () async {},
             icon: Icon(
               Icons.add_circle_outline_outlined,
             ),
@@ -427,6 +322,8 @@ class _ControlButtonsState extends State<ControlButtons> {
                 height: (relativeHeightConstraints! * 0.533) / 2,
                 child: ElevatedButton(
                   style: ButtonStyle(
+                      overlayColor:
+                          MaterialStateProperty.all(Colors.yellow[200]),
                       elevation: MaterialStateProperty.all<double?>(10),
                       shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                           RoundedRectangleBorder(
@@ -448,23 +345,29 @@ class _ControlButtonsState extends State<ControlButtons> {
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Card(
-                elevation: 30,
-                color: Colors.yellow[600],
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(18)),
-                ),
-                child: Container(
-                  width: 180,
-                  height: (relativeHeightConstraints! * 0.533) / 2,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text('14',
-                          style: TextStyle(fontSize: 50, color: Colors.black)),
-                    ],
+              Container(
+                width: 180,
+                height: (relativeHeightConstraints! * 0.533) / 2,
+                child: TextButton(
+                  child: Text(
+                    '14',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 50.0,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
+                  onPressed: () {},
+                  style: ButtonStyle(
+                      overlayColor:
+                          MaterialStateProperty.all(Colors.yellow[200]),
+                      elevation: MaterialStateProperty.all<double?>(10),
+                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                          RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18.0),
+                      )),
+                      backgroundColor:
+                          MaterialStateProperty.all(Colors.yellow[600])),
                 ),
               ),
             ],
