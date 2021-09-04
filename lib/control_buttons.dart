@@ -1,27 +1,39 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:segment_display/segment_display.dart';
 
 class ControlButtons extends StatefulWidget {
-  const ControlButtons({Key? key}) : super(key: key);
-
   @override
   _ControlButtonsState createState() => _ControlButtonsState();
 }
 
 class _ControlButtonsState extends State<ControlButtons> {
+  static const Duration? defaultQuatersDuration = Duration(minutes: 12);
+  static const Duration? defaultShotClockDuration = Duration(seconds: 24);
+
+  Duration? currentQuatersClockDuration = Duration();
+  Duration? currentShotClockDuration = Duration();
+
+  Timer? timer;
+
+  bool countDown = true;
+  bool? minus;
+  bool? add;
   double? relativeWidthConstraints;
   double? relativeHeightConstraints;
   ButtonState? _startPauseState;
-  int? currentQuatersClockMiliSeconds;
-  int? currentQuatersClockSeconds;
-  int? currentShotClockSeconds;
-
+  // int? currentQuatersClockMiliSeconds;
+  // int? currentQuatersClockSeconds;
+  // int? currentShotClockSeconds;
+  // Duration? currentShotClockSeconds;
   @override
   void initState() {
     super.initState();
     _startPauseState = ButtonState.START;
+    currentQuatersClockDuration = defaultQuatersDuration;
+    currentShotClockDuration = defaultShotClockDuration;
   }
 
   @override
@@ -81,6 +93,7 @@ class _ControlButtonsState extends State<ControlButtons> {
     );
   }
 
+// Widgets
   Widget _startPauseButton() {
     return Padding(
       padding: EdgeInsets.only(right: relativeWidthConstraints! * 0.237),
@@ -91,13 +104,13 @@ class _ControlButtonsState extends State<ControlButtons> {
             onPressed: () async {
               if (_startPauseState == ButtonState.START) {
                 //if press and it's show START in display then run
-
+                startTimer();
                 setState(() {
                   _startPauseState = ButtonState.PAUSE;
                 });
               } else if (_startPauseState == ButtonState.PAUSE) {
                 //if press and it's show PAUSE in display then pause
-
+                stopTimer(resets: false);
                 setState(() {
                   _startPauseState = ButtonState.START;
                 });
@@ -164,10 +177,7 @@ class _ControlButtonsState extends State<ControlButtons> {
           width: relativeWidthConstraints! * 0.83,
           height: relativeHeightConstraints! * 0.533,
           child: TextButton(
-            onPressed: () {
-              if (_startPauseState == ButtonState.START) {
-              } else {}
-            },
+            onPressed: reset,
             style: ButtonStyle(
                 overlayColor: MaterialStateProperty.all(Colors.blue[200]),
                 elevation: MaterialStateProperty.all<double?>(10),
@@ -204,6 +214,10 @@ class _ControlButtonsState extends State<ControlButtons> {
   }
 
   Widget _quatersClockWidget() {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(currentQuatersClockDuration!.inMinutes);
+    final seconds =
+        twoDigits(currentQuatersClockDuration!.inSeconds.remainder(60));
     return Expanded(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -216,7 +230,7 @@ class _ControlButtonsState extends State<ControlButtons> {
                 splashColor: Colors.green,
                 splashRadius: 20,
                 iconSize: 50,
-                onPressed: () async {},
+                onPressed: addMinutes,
                 icon: Icon(
                   Icons.add_circle_outline_outlined,
                 ),
@@ -226,7 +240,7 @@ class _ControlButtonsState extends State<ControlButtons> {
                 splashColor: Colors.red,
                 splashRadius: 20,
                 iconSize: 50,
-                onPressed: () async {},
+                onPressed: removeMinutes,
                 icon: Icon(
                   Icons.remove_circle_outline_outlined,
                 ),
@@ -237,7 +251,7 @@ class _ControlButtonsState extends State<ControlButtons> {
             children: [
               SevenSegmentDisplay(
                 backgroundColor: Colors.transparent,
-                value: '12:00',
+                value: '$minutes:$seconds',
                 size: 8.0,
               )
             ],
@@ -250,7 +264,9 @@ class _ControlButtonsState extends State<ControlButtons> {
                 splashColor: Colors.green,
                 splashRadius: 20,
                 iconSize: 50,
-                onPressed: () async {},
+                onPressed: () {
+                  addSeconds('quatersClock');
+                },
                 icon: Icon(
                   Icons.add_circle_outline_outlined,
                 ),
@@ -260,7 +276,9 @@ class _ControlButtonsState extends State<ControlButtons> {
                 splashColor: Colors.red,
                 splashRadius: 20,
                 iconSize: 50,
-                onPressed: () async {},
+                onPressed: () {
+                  removeSeconds('quatersClock');
+                },
                 icon: Icon(
                   Icons.remove_circle_outline_outlined,
                 ),
@@ -273,40 +291,43 @@ class _ControlButtonsState extends State<ControlButtons> {
   }
 
   Widget _shotClockWidget() {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    // final minutes = twoDigits(duration!.inMinutes.remainder(60));
+    final seconds = twoDigits(currentShotClockDuration?.inSeconds ?? 0);
     return Expanded(
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // (-) Seconds
-          IconButton(
-            splashColor: Colors.red,
-            splashRadius: 30,
-            iconSize: 80,
-            onPressed: () async {},
-            icon: Icon(
-              Icons.remove_circle_outline_outlined,
-            ),
-          ),
-          // Display
-          SevenSegmentDisplay(
-            backgroundColor: Colors.transparent,
-            value: '24',
-            size: 8.0,
-          ),
-
-          // (+) Seconds
-          IconButton(
-            splashColor: Colors.green,
-            splashRadius: 30,
-            iconSize: 80,
-            onPressed: () async {},
-            icon: Icon(
-              Icons.add_circle_outline_outlined,
-            ),
-          ),
-        ],
+        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+      // (-) Seconds
+      IconButton(
+        splashColor: Colors.red,
+        splashRadius: 30,
+        iconSize: 80,
+        onPressed: () {
+          removeSeconds('shotClock');
+        },
+        icon: Icon(
+          Icons.remove_circle_outline_outlined,
+        ),
       ),
-    );
+      // Display
+      SevenSegmentDisplay(
+        backgroundColor: Colors.transparent,
+        value: '$seconds',
+        size: 8.0,
+      ),
+
+      // (+) Seconds
+      IconButton(
+        splashColor: Colors.green,
+        splashRadius: 30,
+        iconSize: 80,
+        onPressed: () {
+          addSeconds('shotClock');
+        },
+        icon: Icon(
+          Icons.add_circle_outline_outlined,
+        ),
+      ),
+    ]));
   }
 
   Widget _soundFourteenSecondsWidget() {
@@ -376,6 +397,112 @@ class _ControlButtonsState extends State<ControlButtons> {
       ),
     );
   }
+
+// Logic of timer buttons
+  void reset() {
+    if (countDown) {
+      setState(() {
+        currentShotClockDuration = defaultShotClockDuration;
+      });
+    } else {
+      setState(() {
+        currentShotClockDuration = Duration();
+      });
+    }
+  }
+
+  void startTimer() {
+    timer = Timer.periodic(Duration(seconds: 1), (_) => countdownTime());
+  }
+
+  void addMinutes() {
+    setState(() {
+      final minutes = currentQuatersClockDuration!.inMinutes + 1;
+      if (minutes > 12) {
+        timer?.cancel();
+      } else {
+        currentQuatersClockDuration = Duration(minutes: minutes);
+      }
+    });
+  }
+
+  void removeMinutes() {
+    setState(() {
+      final minutes = currentQuatersClockDuration!.inMinutes - 1;
+      // final seconds = currentQuatersClockDuration!.inSeconds;
+      if (minutes < 0) {
+        timer?.cancel();
+      } else {
+        currentQuatersClockDuration = Duration(minutes: minutes);
+      }
+    });
+  }
+
+  void addSeconds(String clockButton) {
+    // final addSeconds = minus ? -1 : 1;
+    if (clockButton == 'quatersClock') {
+      setState(() {
+        final seconds = currentQuatersClockDuration!.inSeconds + 1;
+        if (seconds > 720) {
+          timer?.cancel();
+        } else {
+          currentQuatersClockDuration = Duration(seconds: seconds);
+        }
+      });
+    } else if (clockButton == 'shotClock') {
+      setState(() {
+        final seconds = currentShotClockDuration!.inSeconds + 1;
+        if (seconds > 24) {
+          timer?.cancel();
+        } else {
+          currentShotClockDuration = Duration(seconds: seconds);
+        }
+      });
+    }
+  }
+
+  void removeSeconds(String clockButton) {
+    // final addSeconds = minus ? -1 : 1;
+    if (clockButton == 'quatersClock') {
+      setState(() {
+        final seconds = currentQuatersClockDuration!.inSeconds - 1;
+        if (seconds < 0) {
+          timer?.cancel();
+        } else {
+          currentQuatersClockDuration = Duration(seconds: seconds);
+        }
+      });
+    } else if (clockButton == 'shotClock') {
+      setState(() {
+        final seconds = currentShotClockDuration!.inSeconds - 1;
+        if (seconds < 0) {
+          timer?.cancel();
+        } else {
+          currentShotClockDuration = Duration(seconds: seconds);
+        }
+      });
+    }
+  }
+
+  void countdownTime() {
+    setState(() {
+      final shotClockseconds = currentShotClockDuration!.inSeconds - 1;
+      final quatersClockseconds = currentQuatersClockDuration!.inSeconds - 1;
+      if (quatersClockseconds < 0 || shotClockseconds < 0) {
+        timer?.cancel();
+      } else {
+        currentShotClockDuration = Duration(seconds: shotClockseconds);
+        currentQuatersClockDuration = Duration(seconds: quatersClockseconds);
+      }
+    });
+  }
+
+  void stopTimer({bool resets = true}) {
+    if (resets) {
+      reset();
+    }
+    setState(() => timer?.cancel());
+  }
 }
 
-enum ButtonState { START, PAUSE, RESET }
+enum ButtonState { START, PAUSE }
