@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:ui';
-
+import 'dart:io';
+import 'package:mqtt_client/mqtt_client.dart';
+import 'package:mqtt_client/mqtt_server_client.dart';
 import 'package:flutter/material.dart';
 import 'package:segment_display/segment_display.dart';
 
@@ -24,22 +26,23 @@ class _ControlButtonsState extends State<ControlButtons> {
   double? relativeWidthConstraints;
   double? relativeHeightConstraints;
   ButtonState? _startPauseState;
-  // int? currentQuatersClockMiliSeconds;
-  // int? currentQuatersClockSeconds;
-  // int? currentShotClockSeconds;
-  // Duration? currentShotClockSeconds;
+
   @override
   void initState() {
     super.initState();
     _startPauseState = ButtonState.START;
     currentQuatersClockDuration = defaultQuatersDuration;
     currentShotClockDuration = defaultShotClockDuration;
+    connectclient();
   }
 
   @override
   void dispose() async {
     super.dispose();
   }
+
+  final MqttServerClient client = MqttServerClient('192.168.0.18', '');
+  MqttClientPayloadBuilder builder = MqttClientPayloadBuilder();
 
   @override
   Widget build(BuildContext context) {
@@ -354,7 +357,9 @@ class _ControlButtonsState extends State<ControlButtons> {
               Container(
                 width: 180,
                 height: (relativeHeightConstraints! * 0.533) / 2,
-                child: ElevatedButton(
+                child:
+                    // Sound button
+                    ElevatedButton(
                   style: ButtonStyle(
                       overlayColor:
                           MaterialStateProperty.all(Colors.yellow[200]),
@@ -365,7 +370,12 @@ class _ControlButtonsState extends State<ControlButtons> {
                       )),
                       backgroundColor:
                           MaterialStateProperty.all(Colors.yellow[600])),
-                  onPressed: () {},
+                  onPressed: () {
+                    // builder = MqttClientPayloadBuilder();
+                    // builder.addInt(1);
+                    // client.publishMessage(
+                    //     "clock/quaters", MqttQos.exactlyOnce, builder.payload!);
+                  },
                   child: Icon(
                     Icons.volume_up_outlined,
                     color: Colors.black,
@@ -565,6 +575,16 @@ class _ControlButtonsState extends State<ControlButtons> {
         } else {
           currentShotClockDuration = Duration(seconds: shotClockseconds);
           currentQuatersClockDuration = Duration(seconds: quatersClockseconds);
+          //For Shot Clock
+          builder = MqttClientPayloadBuilder();
+          builder.addString(shotClockseconds.toString());
+          client.publishMessage(
+              "clock/shot", MqttQos.exactlyOnce, builder.payload!);
+          // For Quaters Clock
+          builder = MqttClientPayloadBuilder();
+          builder.addString(quatersClockseconds.toString());
+          client.publishMessage(
+              "clock/quaters", MqttQos.exactlyOnce, builder.payload!);
         }
       } else {
         final quatersClockseconds = currentQuatersClockDuration!.inSeconds - 1;
@@ -576,6 +596,16 @@ class _ControlButtonsState extends State<ControlButtons> {
         } else {
           currentShotClockDuration = Duration(seconds: shotClockseconds);
           currentQuatersClockDuration = Duration(seconds: quatersClockseconds);
+          //For Shot Clock
+          builder = MqttClientPayloadBuilder();
+          builder.addString(shotClockseconds.toString());
+          client.publishMessage(
+              "clock/shot", MqttQos.exactlyOnce, builder.payload!);
+          // For Quaters Clock
+          builder = MqttClientPayloadBuilder();
+          builder.addString(quatersClockseconds.toString());
+          client.publishMessage(
+              "clock/quaters", MqttQos.exactlyOnce, builder.payload!);
         }
       }
     });
@@ -586,6 +616,77 @@ class _ControlButtonsState extends State<ControlButtons> {
       reset();
     }
     setState(() => timer?.cancel());
+  }
+
+// MQTT Logic
+  Future<int?> connectclient() async {
+    client.logging(on: false);
+    client.keepAlivePeriod = 20;
+    client.onDisconnected = onDisconnected;
+    client.onConnected = onConnected;
+    client.onSubscribed = onSubscribed;
+
+    final MqttConnectMessage connMess = MqttConnectMessage()
+        .withClientIdentifier('Android1')
+        .withWillTopic(
+            'willtopic') // If you set this you must set a will message
+        .withWillMessage('My Will message')
+        .startClean() // Non persistent session for testing
+        .withWillQos(MqttQos.atLeastOnce);
+    print('EXAMPLE::Mosquitto client connecting....');
+    client.connectionMessage = connMess;
+
+    try {
+      await client.connect();
+    } on Exception catch (e) {
+      print('EXAMPLE::client exception - $e');
+      client.disconnect();
+    }
+
+    if (client.connectionStatus!.state == MqttConnectionState.connected) {
+      print('EXAMPLE::Mosquitto client connected');
+    } else {
+      print(
+          'EXAMPLE::ERROR Mosquitto client connection failed - disconnecting, status is ${client.connectionStatus}');
+      client.disconnect();
+      exit(-1);
+    }
+
+    // client.updates!.listen((List<MqttReceivedMessage<MqttMessage>> c) {
+    //   final MqttPublishMessage recMess = (c[0].payload) as MqttPublishMessage;
+    //   final String topic = c[0].topic;
+    //   print(topic);
+    //   final String pt =
+    //       MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
+    //   print(pt);
+
+    // });
+  }
+
+  /// The subscribed callback
+  void onSubscribed(String topic) {
+    print('EXAMPLE::Subscription confirmed for topic $topic');
+  }
+
+  /// The unsolicited disconnect callback
+  void onDisconnected() {
+    print('EXAMPLE::OnDisconnected client callback - Client disconnection');
+    if (client.connectionStatus!.returnCode ==
+        MqttConnectReturnCode.values[0]) {
+      print('EXAMPLE::OnDisconnected callback is solicited, this is correct');
+    }
+    // exit(-1);
+  }
+
+  /// The successful connect callback
+  void onConnected() {
+    print(
+        'EXAMPLE::OnConnected client callback - Client connection was sucessful');
+  }
+
+  /// Pong callback
+  void pong() {
+    print('EXAMPLE::Ping response client callback invoked');
   }
 }
 
