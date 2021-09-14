@@ -31,6 +31,8 @@ dependencies:
   segment_display: ^0.5.0
   custom_timer: ^0.0.6
   mqtt_client: ^9.6.0
+  network_info_plus: ^1.1.0
+  flutter_spinkit: ^5.1.0
 
   
 

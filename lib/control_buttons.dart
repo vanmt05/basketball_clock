@@ -1,10 +1,15 @@
 import 'dart:async';
+// import 'dart:io';
 import 'dart:ui';
 // import 'dart:io';
+import 'package:button_demo/loading.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 import 'package:flutter/material.dart';
 import 'package:segment_display/segment_display.dart';
+import 'package:network_info_plus/network_info_plus.dart';
+// import 'package:flutter/foundation.dart';
+// import 'package:flutter/services.dart';
 
 class ControlButtons extends StatefulWidget {
   @override
@@ -12,8 +17,8 @@ class ControlButtons extends StatefulWidget {
 }
 
 class _ControlButtonsState extends State<ControlButtons> {
-  static const Duration? defaultQuatersDuration = Duration(minutes: 12);
-  static const Duration? defaultShotClockDuration = Duration(seconds: 24);
+  final Duration? defaultQuatersDuration = Duration(minutes: 12);
+  final Duration? defaultShotClockDuration = Duration(seconds: 24);
 
   Duration? currentQuatersClockDuration = Duration();
   Duration? currentShotClockDuration = Duration();
@@ -26,15 +31,20 @@ class _ControlButtonsState extends State<ControlButtons> {
   double? relativeWidthConstraints;
   double? relativeHeightConstraints;
   ButtonState? _startPauseState;
+  String _connectionStatus = 'Unknown';
+  String? wifiGateway;
+
+  final NetworkInfo _networkInfo = NetworkInfo();
 
   bool soundOnOff = false;
   @override
   void initState() {
     super.initState();
+    _initNetworkInfo().then((value) => wifiGateway = value);
+
     _startPauseState = ButtonState.START;
     currentQuatersClockDuration = defaultQuatersDuration;
     currentShotClockDuration = defaultShotClockDuration;
-    connectclient();
   }
 
   @override
@@ -42,59 +52,64 @@ class _ControlButtonsState extends State<ControlButtons> {
     super.dispose();
   }
 
-  final MqttServerClient client = MqttServerClient('192.168.0.23', '');
+  late final MqttServerClient client = MqttServerClient('$wifiGateway', '');
   MqttClientPayloadBuilder builder = MqttClientPayloadBuilder();
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Control Buttons'),
-      ),
-      body: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) {
-            relativeWidthConstraints =
-                constraints.maxWidth / 3; //For body divided by 3
-            relativeHeightConstraints = constraints.maxHeight;
+    if (wifiGateway == null) {
+      return Loading();
+    } else {
+      connectclient();
+      return Scaffold(
+        appBar: AppBar(
+          title: Text('Control Buttons'),
+        ),
+        body: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints constraints) {
+              relativeWidthConstraints =
+                  constraints.maxWidth / 3; //For body divided by 3
+              relativeHeightConstraints = constraints.maxHeight;
 
-            return Container(
-              child: Row(
-                children: [
-                  Flexible(
-                    child: Container(
-                        width: relativeWidthConstraints!,
-                        height: relativeHeightConstraints!,
-                        child:
-                            Column(children: [Spacer(), _startPauseButton()])),
-                  ),
-                  Flexible(
-                    child: Container(
-                      width: relativeWidthConstraints,
-                      child: Column(
-                        children: [
-                          _quatersClockWidget(),
-                          _shotClockWidget(),
-                          _soundFourteenSecondsWidget(),
-                        ],
+              return Container(
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Container(
+                          width: relativeWidthConstraints!,
+                          height: relativeHeightConstraints!,
+                          child: Column(
+                              children: [Spacer(), _startPauseButton()])),
+                    ),
+                    Flexible(
+                      child: Container(
+                        width: relativeWidthConstraints,
+                        child: Column(
+                          children: [
+                            _quatersClockWidget(),
+                            _shotClockWidget(),
+                            _soundFourteenSecondsWidget(),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  Flexible(
-                    child: Container(
-                        width: relativeWidthConstraints!,
-                        height: relativeHeightConstraints!,
-                        child: Column(children: [
-                          Spacer(),
-                          _resetButton(),
-                        ])),
-                  ),
-                ],
-              ),
-            );
-          })),
-    );
+                    Flexible(
+                      child: Container(
+                          width: relativeWidthConstraints!,
+                          height: relativeHeightConstraints!,
+                          child: Column(children: [
+                            Spacer(),
+                            _resetButton(),
+                          ])),
+                    ),
+                  ],
+                ),
+              );
+            })),
+      );
+    }
   }
 
 // Widgets
@@ -703,6 +718,15 @@ class _ControlButtonsState extends State<ControlButtons> {
     setState(() => timer?.cancel());
   }
 
+  Future<String?> _initNetworkInfo() async {
+    var getWifiGatewayIP = await _networkInfo.getWifiGatewayIP();
+
+    setState(() {
+      _connectionStatus = 'Wifi Gateway: $getWifiGatewayIP\n';
+    });
+    return getWifiGatewayIP;
+  }
+
 // MQTT Logic
   Future<int?> connectclient() async {
     client.logging(on: false);
@@ -772,6 +796,7 @@ class _ControlButtonsState extends State<ControlButtons> {
   void onConnected() {
     print(
         'EXAMPLE::OnConnected client callback - Client connection was sucessful');
+    print(_connectionStatus);
   }
 
   /// Pong callback
