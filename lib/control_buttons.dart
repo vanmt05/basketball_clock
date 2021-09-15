@@ -33,6 +33,7 @@ class _ControlButtonsState extends State<ControlButtons> {
   ButtonState? _startPauseState;
   String _connectionStatus = 'Unknown';
   String? wifiGateway;
+  MqttServerClient? client;
 
   final NetworkInfo _networkInfo = NetworkInfo();
 
@@ -40,8 +41,12 @@ class _ControlButtonsState extends State<ControlButtons> {
   @override
   void initState() {
     super.initState();
-    _initNetworkInfo().then((value) => wifiGateway = value);
-
+    _initNetworkInfo().then((value) {
+      wifiGateway = value;
+      print('$wifiGateway init');
+      client = MqttServerClient('$wifiGateway', '');
+      connectclient();
+    });
     _startPauseState = ButtonState.START;
     currentQuatersClockDuration = defaultQuatersDuration;
     currentShotClockDuration = defaultShotClockDuration;
@@ -52,7 +57,6 @@ class _ControlButtonsState extends State<ControlButtons> {
     super.dispose();
   }
 
-  late final MqttServerClient client = MqttServerClient('$wifiGateway', '');
   MqttClientPayloadBuilder builder = MqttClientPayloadBuilder();
 
   @override
@@ -60,7 +64,7 @@ class _ControlButtonsState extends State<ControlButtons> {
     if (wifiGateway == null) {
       return Loading();
     } else {
-      connectclient();
+      print('$wifiGateway build');
       return Scaffold(
         appBar: AppBar(
           title: Text('Control Buttons'),
@@ -392,7 +396,7 @@ class _ControlButtonsState extends State<ControlButtons> {
                     });
                     builder = MqttClientPayloadBuilder();
                     builder.addString(soundOnOff ? "1" : "0");
-                    client.publishMessage(
+                    client!.publishMessage(
                         "sound", MqttQos.exactlyOnce, builder.payload!);
                   },
                   child: Icon(
@@ -463,7 +467,7 @@ class _ControlButtonsState extends State<ControlButtons> {
           //For Shot Clock
           builder = MqttClientPayloadBuilder();
           builder.addString(currentShotClockDuration!.inSeconds.toString());
-          client.publishMessage(
+          client!.publishMessage(
               "clock/shot", MqttQos.exactlyOnce, builder.payload!);
           if (_startPauseState == ButtonState.PAUSE) {
             timer!.cancel();
@@ -479,7 +483,7 @@ class _ControlButtonsState extends State<ControlButtons> {
         //For Shot Clock
         builder = MqttClientPayloadBuilder();
         builder.addString(currentShotClockDuration.toString());
-        client.publishMessage(
+        client!.publishMessage(
             "clock/shot", MqttQos.exactlyOnce, builder.payload!);
       });
     }
@@ -500,12 +504,12 @@ class _ControlButtonsState extends State<ControlButtons> {
           // For Quaters Clock in minutes
           builder = MqttClientPayloadBuilder();
           builder.addString(currentQuatersClockDuration!.inMinutes.toString());
-          client.publishMessage(
+          client!.publishMessage(
               "clock/quaters/minutes", MqttQos.exactlyOnce, builder.payload!);
           // For Quaters Clock in seconds
           builder = MqttClientPayloadBuilder();
           builder.addString(currentQuatersClockDuration!.inSeconds.toString());
-          client.publishMessage(
+          client!.publishMessage(
               "clock/quaters/seconds", MqttQos.exactlyOnce, builder.payload!);
         }
       });
@@ -518,7 +522,7 @@ class _ControlButtonsState extends State<ControlButtons> {
         // For Quaters Clock in minutes
         builder = MqttClientPayloadBuilder();
         builder.addString(currentQuatersClockDuration!.inMinutes.toString());
-        client.publishMessage(
+        client!.publishMessage(
             "clock/quaters/minutes", MqttQos.exactlyOnce, builder.payload!);
       });
     }
@@ -536,12 +540,12 @@ class _ControlButtonsState extends State<ControlButtons> {
           // For Quaters Clock in minutes
           builder = MqttClientPayloadBuilder();
           builder.addString(currentQuatersClockDuration!.inMinutes.toString());
-          client.publishMessage(
+          client!.publishMessage(
               "clock/quaters/minutes", MqttQos.exactlyOnce, builder.payload!);
           // For Quaters Clock in seconds
           builder = MqttClientPayloadBuilder();
           builder.addString(currentQuatersClockDuration!.inSeconds.toString());
-          client.publishMessage(
+          client!.publishMessage(
               "clock/quaters/seconds", MqttQos.exactlyOnce, builder.payload!);
         }
       });
@@ -560,12 +564,12 @@ class _ControlButtonsState extends State<ControlButtons> {
           // For Quaters Clock in minutes
           builder = MqttClientPayloadBuilder();
           builder.addString(currentQuatersClockDuration!.inMinutes.toString());
-          client.publishMessage(
+          client!.publishMessage(
               "clock/quaters/minutes", MqttQos.exactlyOnce, builder.payload!);
           // For Quaters Clock in seconds
           builder = MqttClientPayloadBuilder();
           builder.addString(currentQuatersClockDuration!.inSeconds.toString());
-          client.publishMessage(
+          client!.publishMessage(
               "clock/quaters/seconds", MqttQos.exactlyOnce, builder.payload!);
         }
       });
@@ -583,7 +587,7 @@ class _ControlButtonsState extends State<ControlButtons> {
           //For Shot Clock
           builder = MqttClientPayloadBuilder();
           builder.addString(currentShotClockDuration!.inSeconds.toString());
-          client.publishMessage(
+          client!.publishMessage(
               "clock/shot", MqttQos.exactlyOnce, builder.payload!);
         }
       });
@@ -603,12 +607,12 @@ class _ControlButtonsState extends State<ControlButtons> {
           /// For Quaters Clock in minutes
           builder = MqttClientPayloadBuilder();
           builder.addString(currentQuatersClockDuration!.inMinutes.toString());
-          client.publishMessage(
+          client!.publishMessage(
               "clock/quaters/minutes", MqttQos.exactlyOnce, builder.payload!);
           // For Quaters Clock in seconds
           builder = MqttClientPayloadBuilder();
           builder.addString(currentQuatersClockDuration!.inSeconds.toString());
-          client.publishMessage(
+          client!.publishMessage(
               "clock/quaters/seconds", MqttQos.exactlyOnce, builder.payload!);
         }
       });
@@ -625,7 +629,7 @@ class _ControlButtonsState extends State<ControlButtons> {
           //For Shot Clock
           builder = MqttClientPayloadBuilder();
           builder.addString(currentShotClockDuration!.inSeconds.toString());
-          client.publishMessage(
+          client!.publishMessage(
               "clock/shot", MqttQos.exactlyOnce, builder.payload!);
         }
       });
@@ -647,7 +651,7 @@ class _ControlButtonsState extends State<ControlButtons> {
         //For Shot Clock
         builder = MqttClientPayloadBuilder();
         builder.addString(currentShotClockDuration!.inSeconds.toString());
-        client.publishMessage(
+        client!.publishMessage(
             "clock/shot", MqttQos.exactlyOnce, builder.payload!);
       });
     }
@@ -668,17 +672,17 @@ class _ControlButtonsState extends State<ControlButtons> {
           //For Shot Clock
           builder = MqttClientPayloadBuilder();
           builder.addString(currentShotClockDuration!.inSeconds.toString());
-          client.publishMessage(
+          client!.publishMessage(
               "clock/shot", MqttQos.exactlyOnce, builder.payload!);
           // For Quaters Clock in minutes
           builder = MqttClientPayloadBuilder();
           builder.addString(currentQuatersClockDuration!.inMinutes.toString());
-          client.publishMessage(
+          client!.publishMessage(
               "clock/quaters/minutes", MqttQos.exactlyOnce, builder.payload!);
           // For Quaters Clock in seconds
           builder = MqttClientPayloadBuilder();
           builder.addString(currentQuatersClockDuration!.inSeconds.toString());
-          client.publishMessage(
+          client!.publishMessage(
               "clock/quaters/seconds", MqttQos.exactlyOnce, builder.payload!);
         }
       } else {
@@ -694,17 +698,17 @@ class _ControlButtonsState extends State<ControlButtons> {
           //For Shot Clock
           builder = MqttClientPayloadBuilder();
           builder.addString(currentShotClockDuration!.inSeconds.toString());
-          client.publishMessage(
+          client!.publishMessage(
               "clock/shot", MqttQos.exactlyOnce, builder.payload!);
           // For Quaters Clock in minutes
           builder = MqttClientPayloadBuilder();
           builder.addString(currentQuatersClockDuration!.inMinutes.toString());
-          client.publishMessage(
+          client!.publishMessage(
               "clock/quaters/minutes", MqttQos.exactlyOnce, builder.payload!);
           // For Quaters Clock in seconds
           builder = MqttClientPayloadBuilder();
           builder.addString(currentQuatersClockDuration!.inSeconds.toString());
-          client.publishMessage(
+          client!.publishMessage(
               "clock/quaters/seconds", MqttQos.exactlyOnce, builder.payload!);
         }
       }
@@ -729,11 +733,11 @@ class _ControlButtonsState extends State<ControlButtons> {
 
 // MQTT Logic
   Future<int?> connectclient() async {
-    client.logging(on: false);
-    client.keepAlivePeriod = 20;
-    client.onDisconnected = onDisconnected;
-    client.onConnected = onConnected;
-    client.onSubscribed = onSubscribed;
+    client!.logging(on: false);
+    client!.keepAlivePeriod = 20;
+    client!.onDisconnected = onDisconnected;
+    client!.onConnected = onConnected;
+    client!.onSubscribed = onSubscribed;
 
     final MqttConnectMessage connMess = MqttConnectMessage()
         .withClientIdentifier('Android1')
@@ -743,36 +747,36 @@ class _ControlButtonsState extends State<ControlButtons> {
         .startClean() // Non persistent session for testing
         .withWillQos(MqttQos.atLeastOnce);
     print('EXAMPLE::Mosquitto client connecting....');
-    client.connectionMessage = connMess;
+    client!.connectionMessage = connMess;
 
     try {
-      await client.connect();
+      await client!.connect();
     } on Exception catch (e) {
       print('EXAMPLE::client exception - $e');
-      client.disconnect();
+      client!.disconnect();
     }
 
-    if (client.connectionStatus!.state == MqttConnectionState.connected) {
+    if (client!.connectionStatus!.state == MqttConnectionState.connected) {
       print('EXAMPLE::Mosquitto client connected');
       //For Shot Clock
       builder = MqttClientPayloadBuilder();
       builder.addString(currentShotClockDuration!.inSeconds.toString());
-      client.publishMessage(
-          "clock/shot", MqttQos.exactlyOnce, builder.payload!);
+      client!
+          .publishMessage("clock/shot", MqttQos.exactlyOnce, builder.payload!);
       // For Quaters Clock in minutes
       builder = MqttClientPayloadBuilder();
       builder.addString(currentQuatersClockDuration!.inMinutes.toString());
-      client.publishMessage(
+      client!.publishMessage(
           "clock/quaters/minutes", MqttQos.exactlyOnce, builder.payload!);
       // For Quaters Clock in seconds
       builder = MqttClientPayloadBuilder();
       builder.addString(currentQuatersClockDuration!.inSeconds.toString());
-      client.publishMessage(
+      client!.publishMessage(
           "clock/quaters/seconds", MqttQos.exactlyOnce, builder.payload!);
     } else {
       print(
-          'EXAMPLE::ERROR Mosquitto client connection failed - disconnecting, status is ${client.connectionStatus}');
-      client.disconnect();
+          'EXAMPLE::ERROR Mosquitto client connection failed - disconnecting, status is ${client!.connectionStatus}');
+      client!.disconnect();
       // exit(-1);
     }
   }
@@ -785,7 +789,7 @@ class _ControlButtonsState extends State<ControlButtons> {
   /// The unsolicited disconnect callback
   void onDisconnected() {
     print('EXAMPLE::OnDisconnected client callback - Client disconnection');
-    if (client.connectionStatus!.returnCode ==
+    if (client!.connectionStatus!.returnCode ==
         MqttConnectReturnCode.values[0]) {
       print('EXAMPLE::OnDisconnected callback is solicited, this is correct');
     }
