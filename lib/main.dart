@@ -1,6 +1,7 @@
 import 'package:button_demo/control_buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:wakelock/wakelock.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,6 +13,10 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+// ...
+
+// The following line will enable the Android and iOS wakelock.
+    Wakelock.enable();
     return MaterialApp(
       title: 'Buttons With Icons',
       theme: ThemeData(
