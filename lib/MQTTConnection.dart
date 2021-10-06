@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 import 'package:network_info_plus/network_info_plus.dart';
@@ -10,6 +13,10 @@ class MQTTConnection {
   Duration currentShotClockDuration;
   MqttClientPayloadBuilder builder = MqttClientPayloadBuilder();
   final NetworkInfo _networkInfo = NetworkInfo();
+  StreamController<MqttConnectionState> _streamConnController =
+      StreamController();
+
+  Stream<MqttConnectionState> get streamConn => _streamConnController.stream;
 
   MQTTConnection(
       this.currentQuatersClockDuration, this.currentShotClockDuration);
@@ -25,9 +32,12 @@ class MQTTConnection {
 // MQTT Logic
   Future<int?> connectclient() async {
     client!.logging(on: false);
-    client!.keepAlivePeriod = 20;
-    client!.onDisconnected = onDisconnected;
+    client!.keepAlivePeriod = 720;
+    client!.autoReconnect = true;
+    client!.onAutoReconnect = onAutoReconnect;
+    client!.onAutoReconnected = onAutoReconnected;
     client!.onConnected = onConnected;
+    client!.onDisconnected = onDisconnected;
     client!.onSubscribed = onSubscribed;
 
     final MqttConnectMessage connMess = MqttConnectMessage()
@@ -42,8 +52,18 @@ class MQTTConnection {
 
     try {
       await client!.connect();
-    } on Exception catch (e) {
+    } on SocketException catch (e) {
+      print('Error: ${e.osError!.message}');
+      if (e.osError!.message == "Connection refused") {
+        wifiGateway = null;
+      } else if (e.osError!.message == "Software caused connection abort") {}
+      client!.disconnect();
+    } on NoConnectionException catch (e) {
+      // Raised by the client when connection fails.
       print('EXAMPLE::client exception - $e');
+      client!.disconnect();
+    } catch (e) {
+      print('Error: $e');
       client!.disconnect();
     }
 
@@ -68,32 +88,52 @@ class MQTTConnection {
       print(
           'EXAMPLE::ERROR Mosquitto client connection failed - disconnecting, status is ${client!.connectionStatus}');
       client!.disconnect();
+      // ignore: unnecessary_statements
+
       // exit(-1);
     }
   }
 
   /// The subscribed callback
   void onSubscribed(String topic) {
+    _streamConnController.add(client!.connectionStatus!.state);
+
     print('EXAMPLE::Subscription confirmed for topic $topic');
   }
 
   /// The unsolicited disconnect callback
   void onDisconnected() {
+    _streamConnController.add(client!.connectionStatus!.state);
+
     print('EXAMPLE::OnDisconnected client callback - Client disconnection');
     if (client!.connectionStatus!.returnCode ==
         MqttConnectReturnCode.values[0]) {
       print('EXAMPLE::OnDisconnected callback is solicited, this is correct');
     }
-    wifiGateway = null;
+    // wifiGateway = null;
 
     // exit(-1);
   }
 
   /// The successful connect callback
   void onConnected() {
+    _streamConnController.add(client!.connectionStatus!.state);
+
     print(
         'EXAMPLE::OnConnected client callback - Client connection was sucessful');
     // print(_connectionStatus);
+  }
+
+  void onAutoReconnect() {
+    _streamConnController.add(client!.connectionStatus!.state);
+
+    print(
+        'EXAMPLE::onAutoReconnect client callback - Client auto reconnection sequence will start');
+  }
+
+  void onAutoReconnected() {
+    print(
+        'EXAMPLE::onAutoReconnected client callback - Client auto reconnection sequence has completed');
   }
 
   /// Pong callback

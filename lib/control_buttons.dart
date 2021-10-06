@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:ui';
 import 'package:button_demo/loading.dart';
-import 'package:button_demo/reconnect.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:flutter/material.dart';
 import 'package:segment_display/segment_display.dart';
 import 'package:button_demo/MQTTConnection.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class ControlButtons extends StatefulWidget {
   @override
@@ -13,7 +13,7 @@ class ControlButtons extends StatefulWidget {
 }
 
 class _ControlButtonsState extends State<ControlButtons> {
-  final Duration defaultQuatersDuration = Duration(minutes: 12);
+  final Duration defaultQuatersDuration = Duration(seconds: 48);
   final Duration defaultShotClockDuration = Duration(seconds: 24);
 
   Timer? timer;
@@ -23,100 +23,139 @@ class _ControlButtonsState extends State<ControlButtons> {
   bool? add;
   double? relativeWidthConstraints;
   double? relativeHeightConstraints;
-  ButtonState? _startPauseState;
+  ButtonState? _startPauseState = ButtonState.START;
+  WasConnected? _wasConnected = WasConnected.NEVER;
   bool soundOnOff = false;
+  var wifiConnection;
+  var streamConnSubscription;
+  MqttConnectionState? connectionStatus;
+  bool isConnectedWifi = false;
+  bool quatersClockOverShotClock = false;
   late MQTTConnection mqttConnection =
       MQTTConnection(defaultQuatersDuration, defaultShotClockDuration);
 
   @override
   void initState() {
     super.initState();
-    mqttConnection.initNetworkInfo().then((value) async {
-      await mqttConnection.connectclient();
-    });
 
-    _startPauseState = ButtonState.START;
+    wifiConnection = Connectivity()
+        .onConnectivityChanged
+        .listen((ConnectivityResult result) {
+      print(result);
+
+      // Got a new connectivity status!
+      if (result == ConnectivityResult.wifi) {
+        isConnectedWifi = true;
+        if (_wasConnected == WasConnected.NEVER) {
+          mqttConnection.initNetworkInfo().then((value) async {
+            await mqttConnection.connectclient().then((value) => setState(() {
+                  if (mqttConnection.client?.connectionStatus?.state ==
+                      MqttConnectionState.connected) {
+                    _wasConnected = WasConnected.BEFORE;
+                  }
+                }));
+          });
+        }
+        if (_wasConnected == WasConnected.BEFORE) {
+          mqttConnection.initNetworkInfo();
+          setState(() {
+            mqttConnection.client?.autoReconnect = true;
+          });
+        }
+      }
+
+      if (result == ConnectivityResult.none) {
+        setState(() {
+          mqttConnection.client?.autoReconnect = true;
+        });
+        isConnectedWifi = false;
+        stopTimer(resets: false);
+        setState(() {});
+      }
+    });
   }
 
   @override
   void dispose() async {
     super.dispose();
+    print('dispose');
+    wifiConnection.cancel();
   }
 
   @override
   Widget build(BuildContext context) {
-    while (mqttConnection.wifiGateway == null) {
-      print(mqttConnection.wifiGateway);
-      Future.delayed(const Duration(seconds: 5), () {
-        setState(() {
-          mqttConnection.initNetworkInfo().then((value) {
-            mqttConnection.connectclient();
-          });
-        });
-      });
-      return Loading();
-    }
-    if (mqttConnection.client!.connectionStatus!.state ==
-        MqttConnectionState.disconnected) {
-      return Reconnect();
-    } else if (mqttConnection.client!.connectionStatus!.state ==
-        MqttConnectionState.connecting) {
-      Future.delayed(const Duration(seconds: 5), () {
+    print(_wasConnected);
+
+    if ((mqttConnection.client?.connectionStatus?.state ==
+        MqttConnectionState.connecting)) {
+      Future.delayed(const Duration(milliseconds: 1000), () {
+        final snackBar = SnackBar(
+            duration: Duration(seconds: 1),
+            content: Row(
+              children: [
+                Text(
+                  'Connecting',
+                  style: TextStyle(fontSize: 25),
+                ),
+                SizedBox(
+                  width: 10,
+                ),
+                Loading()
+              ],
+            ));
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
         setState(() {});
       });
-      return Loading();
-    } else {
-      print('${mqttConnection.client!.connectionStatus!.state} build');
-      print('${mqttConnection.wifiGateway} build');
-      return Scaffold(
-        appBar: AppBar(
-          title: Text('Control Buttons'),
-        ),
-        body: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: LayoutBuilder(
-                builder: (BuildContext context, BoxConstraints constraints) {
-              relativeWidthConstraints =
-                  constraints.maxWidth / 3; //For body divided by 3
-              relativeHeightConstraints = constraints.maxHeight;
+    }
 
-              return Container(
-                child: Row(
-                  children: [
-                    Flexible(
-                      child: Container(
-                          width: relativeWidthConstraints!,
-                          height: relativeHeightConstraints!,
-                          child: Column(
-                              children: [Spacer(), _startPauseButton()])),
-                    ),
-                    Flexible(
-                      child: Container(
-                        width: relativeWidthConstraints,
-                        child: Column(
-                          children: [
-                            _quatersClockWidget(),
-                            _shotClockWidget(),
-                            _soundFourteenSecondsWidget(),
-                          ],
-                        ),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Control Buttons'),
+      ),
+      body: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+            relativeWidthConstraints =
+                constraints.maxWidth / 3; //For body divided by 3
+            relativeHeightConstraints = constraints.maxHeight;
+
+            return Container(
+              child: Row(
+                children: [
+                  Flexible(
+                    child: Container(
+                        width: relativeWidthConstraints!,
+                        height: relativeHeightConstraints!,
+                        child:
+                            Column(children: [Spacer(), _startPauseButton()])),
+                  ),
+                  Flexible(
+                    child: Container(
+                      width: relativeWidthConstraints,
+                      child: Column(
+                        children: [
+                          _quatersClockWidget(),
+                          _shotClockWidget(),
+                          _soundFourteenSecondsWidget(),
+                        ],
                       ),
                     ),
-                    Flexible(
-                      child: Container(
-                          width: relativeWidthConstraints!,
-                          height: relativeHeightConstraints!,
-                          child: Column(children: [
-                            Spacer(),
-                            _resetButton(),
-                          ])),
-                    ),
-                  ],
-                ),
-              );
-            })),
-      );
-    }
+                  ),
+                  Flexible(
+                    child: Container(
+                        width: relativeWidthConstraints!,
+                        height: relativeHeightConstraints!,
+                        child: Column(children: [
+                          Spacer(),
+                          _resetButton(),
+                        ])),
+                  ),
+                ],
+              ),
+            );
+          })),
+    );
   }
 
 // Widgets
@@ -128,67 +167,100 @@ class _ControlButtonsState extends State<ControlButtons> {
           height: relativeHeightConstraints! * 0.533,
           child: TextButton(
             onPressed: () async {
-              if (_startPauseState == ButtonState.START) {
-                //if press and it's show START in display then run
-                startTimer();
-                setState(() {
-                  _startPauseState = ButtonState.PAUSE;
-                });
-              } else if (_startPauseState == ButtonState.PAUSE) {
-                //if press and it's show PAUSE in display then pause
-                stopTimer(resets: false);
-                setState(() {
-                  _startPauseState = ButtonState.START;
-                });
+              if (mqttConnection.client?.connectionStatus?.state ==
+                      MqttConnectionState.connected &&
+                  isConnectedWifi) {
+                if (_startPauseState == ButtonState.START) {
+                  //if press and it's show START in display then run
+                  startTimer();
+                  setState(() {
+                    _startPauseState = ButtonState.PAUSE;
+                  });
+                } else if (_startPauseState == ButtonState.PAUSE) {
+                  //if press and it's show PAUSE in display then pause
+                  stopTimer(resets: false);
+                  setState(() {
+                    _startPauseState = ButtonState.START;
+                  });
+                }
+              } else {
+                setState(() {});
               }
             },
             style: ButtonStyle(
                 overlayColor: MaterialStateProperty.all(
-                    (_startPauseState == ButtonState.START)
-                        ? Colors.red
-                        : (_startPauseState == ButtonState.PAUSE)
-                            ? Colors.green[600]
-                            : Colors.transparent),
+                    (mqttConnection.client?.connectionStatus?.state ==
+                                MqttConnectionState.connected &&
+                            isConnectedWifi)
+                        ? (_startPauseState == ButtonState.START)
+                            ? Colors.red
+                            : (_startPauseState == ButtonState.PAUSE)
+                                ? Colors.green[600]
+                                : Colors.transparent
+                        : Colors.transparent),
                 elevation: MaterialStateProperty.all<double?>(10),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(70.0),
                 )),
                 backgroundColor: MaterialStateProperty.all(
-                    (_startPauseState == ButtonState.START)
-                        ? Colors.green[600]
-                        : (_startPauseState == ButtonState.PAUSE)
-                            ? Colors.red
-                            : Colors.grey[300])),
+                    (mqttConnection.client?.connectionStatus?.state ==
+                                MqttConnectionState.connected &&
+                            isConnectedWifi)
+                        ? (_startPauseState == ButtonState.START)
+                            ? Colors.green[600]
+                            : (_startPauseState == ButtonState.PAUSE)
+                                ? Colors.red
+                                : Colors.grey[300]
+                        : Colors.grey[300])),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                ((_startPauseState == ButtonState.START) ||
-                        (_startPauseState == ButtonState.DISABLE))
-                    ? Icon(
-                        Icons.play_arrow_outlined,
-                        size: 150,
-                        color: Colors.white,
-                      )
+                (mqttConnection.client?.connectionStatus?.state ==
+                            MqttConnectionState.connected &&
+                        isConnectedWifi)
+                    ? ((_startPauseState == ButtonState.START) ||
+                            (_startPauseState == ButtonState.DISABLE))
+                        ? Icon(
+                            Icons.play_arrow_outlined,
+                            size: 150,
+                            color: Colors.white,
+                          )
+                        : Icon(
+                            Icons.pause,
+                            size: 150,
+                            color: Colors.white,
+                          )
                     : Icon(
-                        Icons.pause,
+                        Icons.play_arrow_outlined,
                         size: 150,
                         color: Colors.white,
                       ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: ((_startPauseState == ButtonState.START) ||
-                          (_startPauseState == ButtonState.DISABLE))
-                      ? Text(
-                          'START',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 50.0,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        )
+                  child: (mqttConnection.client?.connectionStatus?.state ==
+                              MqttConnectionState.connected &&
+                          isConnectedWifi)
+                      ? ((_startPauseState == ButtonState.START) ||
+                              (_startPauseState == ButtonState.DISABLE))
+                          ? Text(
+                              'START',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 50.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            )
+                          : Text(
+                              'PAUSE',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 50.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            )
                       : Text(
-                          'PAUSE',
+                          'START',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 50.0,
@@ -209,21 +281,77 @@ class _ControlButtonsState extends State<ControlButtons> {
           width: relativeWidthConstraints! * 0.83,
           height: relativeHeightConstraints! * 0.533,
           child: TextButton(
-            onPressed: reset,
+            onLongPress: () {
+              if (mqttConnection.client!.connectionStatus!.state ==
+                      MqttConnectionState.connected &&
+                  isConnectedWifi) {
+                setState(() {
+                  stopTimer(resets: false);
+                  mqttConnection.currentQuatersClockDuration =
+                      defaultQuatersDuration;
+                  mqttConnection.currentShotClockDuration =
+                      defaultShotClockDuration;
+                  _startPauseState = ButtonState.START;
+                  //For Shot Clock
+                  mqttConnection.builder = MqttClientPayloadBuilder();
+                  mqttConnection.builder.addString(mqttConnection
+                      .currentShotClockDuration.inSeconds
+                      .toString());
+                  mqttConnection.client!.publishMessage("clock/shot",
+                      MqttQos.exactlyOnce, mqttConnection.builder.payload!);
+                  // For Quaters Clock in minutes
+                  mqttConnection.builder = MqttClientPayloadBuilder();
+                  mqttConnection.builder.addString(mqttConnection
+                      .currentQuatersClockDuration.inMinutes
+                      .toString());
+                  mqttConnection.client!.publishMessage("clock/quaters/minutes",
+                      MqttQos.exactlyOnce, mqttConnection.builder.payload!);
+                  // For Quaters Clock in seconds
+                  mqttConnection.builder = MqttClientPayloadBuilder();
+                  mqttConnection.builder.addString(mqttConnection
+                      .currentQuatersClockDuration.inSeconds
+                      .toString());
+                  mqttConnection.client!.publishMessage("clock/quaters/seconds",
+                      MqttQos.exactlyOnce, mqttConnection.builder.payload!);
+                });
+              } else {
+                setState(() {});
+              }
+            },
+            onPressed: () {
+              if (mqttConnection.client!.connectionStatus!.state ==
+                      MqttConnectionState.connected &&
+                  isConnectedWifi &&
+                  mqttConnection.currentQuatersClockDuration.inSeconds > 24) {
+                reset();
+              } else {
+                setState(() {});
+              }
+            },
             style: ButtonStyle(
-                overlayColor: MaterialStateProperty.all(
-                    (mqttConnection.currentQuatersClockDuration.inSeconds > 24)
+                overlayColor: MaterialStateProperty.all((mqttConnection
+                                .client?.connectionStatus?.state ==
+                            MqttConnectionState.connected &&
+                        isConnectedWifi)
+                    ? (mqttConnection.currentQuatersClockDuration.inSeconds >
+                            24)
                         ? Colors.blue[200]
-                        : Colors.transparent),
+                        : Colors.transparent
+                    : Colors.transparent),
                 elevation: MaterialStateProperty.all<double?>(10),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(70.0),
                 )),
-                backgroundColor: MaterialStateProperty.all(
-                    (mqttConnection.currentQuatersClockDuration.inSeconds > 24)
+                backgroundColor: MaterialStateProperty.all((mqttConnection
+                                .client?.connectionStatus?.state ==
+                            MqttConnectionState.connected &&
+                        isConnectedWifi)
+                    ? (mqttConnection.currentQuatersClockDuration.inSeconds >
+                            24)
                         ? Colors.blue
-                        : Colors.grey[300])),
+                        : Colors.grey[300]
+                    : Colors.grey[300])),
             child: Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -266,20 +394,38 @@ class _ControlButtonsState extends State<ControlButtons> {
             children: [
               // (+) Minutes
               IconButton(
+                disabledColor: Colors.grey[350],
                 splashColor: Colors.green,
                 splashRadius: 20,
                 iconSize: 50,
-                onPressed: addMinutes,
+                onPressed: () {
+                  if (mqttConnection.client?.connectionStatus?.state ==
+                          MqttConnectionState.connected &&
+                      isConnectedWifi) {
+                    addMinutes();
+                  } else {
+                    return null;
+                  }
+                },
                 icon: Icon(
                   Icons.add_circle_outline_outlined,
                 ),
               ),
               // (-) Minutes
               IconButton(
+                disabledColor: Colors.grey[350],
                 splashColor: Colors.red,
                 splashRadius: 20,
                 iconSize: 50,
-                onPressed: removeMinutes,
+                onPressed: () {
+                  if (mqttConnection.client?.connectionStatus?.state ==
+                          MqttConnectionState.connected &&
+                      isConnectedWifi) {
+                    removeMinutes();
+                  } else {
+                    return null;
+                  }
+                },
                 icon: Icon(
                   Icons.remove_circle_outline_outlined,
                 ),
@@ -305,7 +451,13 @@ class _ControlButtonsState extends State<ControlButtons> {
                 splashRadius: 20,
                 iconSize: 50,
                 onPressed: () {
-                  addSeconds('quatersClock');
+                  if (mqttConnection.client?.connectionStatus?.state ==
+                          MqttConnectionState.connected &&
+                      isConnectedWifi) {
+                    addSeconds('quatersClock');
+                  } else {
+                    setState(() {});
+                  }
                 },
                 icon: Icon(
                   Icons.add_circle_outline_outlined,
@@ -313,11 +465,18 @@ class _ControlButtonsState extends State<ControlButtons> {
               ),
               // (-) Seconds
               IconButton(
+                disabledColor: Colors.grey[350],
                 splashColor: Colors.red,
                 splashRadius: 20,
                 iconSize: 50,
                 onPressed: () {
-                  removeSeconds('quatersClock');
+                  if (mqttConnection.client?.connectionStatus?.state ==
+                          MqttConnectionState.connected &&
+                      isConnectedWifi) {
+                    removeSeconds('quatersClock');
+                  } else {
+                    setState(() {});
+                  }
                 },
                 icon: Icon(
                   Icons.remove_circle_outline_outlined,
@@ -339,11 +498,19 @@ class _ControlButtonsState extends State<ControlButtons> {
         child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
       // (-) Seconds
       IconButton(
+        disabledColor: Colors.grey[350],
         splashColor: Colors.red,
         splashRadius: 30,
         iconSize: 80,
         onPressed: () {
-          removeSeconds('shotClock');
+          if (mqttConnection.client?.connectionStatus?.state ==
+                  MqttConnectionState.connected &&
+              isConnectedWifi &&
+              mqttConnection.currentQuatersClockDuration.inSeconds > 24) {
+            removeSeconds('shotClock');
+          } else {
+            setState(() {});
+          }
         },
         icon: Icon(
           Icons.remove_circle_outline_outlined,
@@ -358,11 +525,19 @@ class _ControlButtonsState extends State<ControlButtons> {
 
       // (+) Seconds
       IconButton(
+        disabledColor: Colors.grey[350],
         splashColor: Colors.green,
         splashRadius: 30,
         iconSize: 80,
         onPressed: () {
-          addSeconds('shotClock');
+          if (mqttConnection.client?.connectionStatus?.state ==
+                  MqttConnectionState.connected &&
+              isConnectedWifi &&
+              mqttConnection.currentQuatersClockDuration.inSeconds > 24) {
+            addSeconds('shotClock');
+          } else {
+            setState(() {});
+          }
         },
         icon: Icon(
           Icons.add_circle_outline_outlined,
@@ -386,27 +561,45 @@ class _ControlButtonsState extends State<ControlButtons> {
                     // Sound button
                     ElevatedButton(
                   style: ButtonStyle(
-                      overlayColor:
-                          MaterialStateProperty.all(Colors.yellow[200]),
+                      overlayColor: MaterialStateProperty.all(
+                          (mqttConnection.client?.connectionStatus?.state ==
+                                      MqttConnectionState.connected &&
+                                  isConnectedWifi)
+                              ? Colors.yellow[200]
+                              : Colors.grey[300]),
                       elevation: MaterialStateProperty.all<double?>(10),
                       shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                           RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(18.0),
                       )),
-                      backgroundColor:
-                          MaterialStateProperty.all(Colors.yellow[600])),
+                      backgroundColor: MaterialStateProperty.all(
+                          (mqttConnection.client?.connectionStatus?.state ==
+                                      MqttConnectionState.connected &&
+                                  isConnectedWifi)
+                              ? Colors.yellow[600]
+                              : Colors.grey[300])),
                   onPressed: () {
-                    setState(() {
-                      soundOnOff = !soundOnOff;
-                    });
-                    mqttConnection.builder = MqttClientPayloadBuilder();
-                    mqttConnection.builder.addString(soundOnOff ? "1" : "0");
-                    mqttConnection.client!.publishMessage("sound",
-                        MqttQos.exactlyOnce, mqttConnection.builder.payload!);
+                    if (mqttConnection.client?.connectionStatus?.state ==
+                            MqttConnectionState.connected &&
+                        isConnectedWifi) {
+                      setState(() {
+                        soundOnOff = !soundOnOff;
+                      });
+                      mqttConnection.builder = MqttClientPayloadBuilder();
+                      mqttConnection.builder.addString(soundOnOff ? "1" : "0");
+                      mqttConnection.client!.publishMessage("sound",
+                          MqttQos.exactlyOnce, mqttConnection.builder.payload!);
+                    } else {
+                      setState(() {});
+                    }
                   },
                   child: Icon(
                     Icons.volume_up_outlined,
-                    color: Colors.black,
+                    color: (mqttConnection.client?.connectionStatus?.state ==
+                                MqttConnectionState.connected &&
+                            isConnectedWifi)
+                        ? Colors.black
+                        : Colors.grey,
                     size: 80,
                   ),
                 ),
@@ -424,39 +617,55 @@ class _ControlButtonsState extends State<ControlButtons> {
                   child: Text(
                     '14',
                     style: TextStyle(
-                      color: ((_startPauseState == ButtonState.START ||
-                                  _startPauseState == ButtonState.DISABLE) &&
-                              mqttConnection
-                                      .currentQuatersClockDuration.inSeconds >
-                                  24)
-                          ? Colors.black
-                          : Colors.grey,
-                      fontSize: 50.0,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  onPressed: fourteenSeconds,
-                  style: ButtonStyle(
-                      overlayColor: MaterialStateProperty.all(
-                          ((_startPauseState == ButtonState.START ||
+                      color: (mqttConnection.client?.connectionStatus?.state ==
+                                  MqttConnectionState.connected &&
+                              isConnectedWifi)
+                          ? ((_startPauseState == ButtonState.START ||
                                       _startPauseState ==
                                           ButtonState.DISABLE) &&
                                   mqttConnection.currentQuatersClockDuration
                                           .inSeconds >
                                       24)
+                              ? Colors.black
+                              : Colors.grey
+                          : Colors.grey,
+                      fontSize: 50.0,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  onPressed: () {
+                    if (mqttConnection.client?.connectionStatus?.state ==
+                            MqttConnectionState.connected &&
+                        isConnectedWifi) {
+                      fourteenSeconds();
+                    } else {
+                      setState(() {});
+                    }
+                  },
+                  style: ButtonStyle(
+                      overlayColor: MaterialStateProperty.all((mqttConnection
+                                      .client?.connectionStatus?.state ==
+                                  MqttConnectionState.connected &&
+                              isConnectedWifi)
+                          ? ((_startPauseState == ButtonState.START || _startPauseState == ButtonState.DISABLE) &&
+                                  mqttConnection.currentQuatersClockDuration.inSeconds >
+                                      24)
                               ? Colors.yellow[200]
-                              : Colors.transparent),
+                              : Colors.transparent
+                          : Colors.transparent),
                       elevation: MaterialStateProperty.all<double?>(10),
                       shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                           RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(18.0),
                       )),
                       backgroundColor: MaterialStateProperty.all(
-                          ((_startPauseState == ButtonState.START ||
-                                      _startPauseState ==
-                                          ButtonState.DISABLE) &&
-                                  mqttConnection.currentQuatersClockDuration.inSeconds > 24)
-                              ? Colors.yellow[600]
+                          (mqttConnection.client?.connectionStatus?.state == MqttConnectionState.connected &&
+                                  isConnectedWifi)
+                              ? ((_startPauseState == ButtonState.START ||
+                                          _startPauseState == ButtonState.DISABLE) &&
+                                      mqttConnection.currentQuatersClockDuration.inSeconds > 24)
+                                  ? Colors.yellow[600]
+                                  : Colors.grey[300]
                               : Colors.grey[300])),
                 ),
               ),
@@ -481,6 +690,7 @@ class _ControlButtonsState extends State<ControlButtons> {
               MqttQos.exactlyOnce, mqttConnection.builder.payload!);
           if (_startPauseState == ButtonState.PAUSE) {
             timer!.cancel();
+            _startPauseState = ButtonState.START;
           } else if (_startPauseState == ButtonState.DISABLE) {
             startTimer();
             _startPauseState = ButtonState.PAUSE;
@@ -692,13 +902,19 @@ class _ControlButtonsState extends State<ControlButtons> {
     setState(() {
       if (mqttConnection.currentQuatersClockDuration.inSeconds > 24) {
         final shotClockseconds =
-            mqttConnection.currentShotClockDuration.inSeconds - 1;
+            (mqttConnection.currentShotClockDuration.inSeconds > 0)
+                ? mqttConnection.currentShotClockDuration.inSeconds - 1
+                : 0;
         final quatersClockseconds =
-            mqttConnection.currentQuatersClockDuration.inSeconds - 1;
+            (mqttConnection.currentQuatersClockDuration.inSeconds > 0)
+                ? mqttConnection.currentQuatersClockDuration.inSeconds - 1
+                : 0;
 
-        if (quatersClockseconds < 0 || shotClockseconds < 0) {
+        if (mqttConnection.currentShotClockDuration.inSeconds == 0) {
           timer?.cancel();
-          _startPauseState = ButtonState.DISABLE; //Show Start Button
+
+          _startPauseState = ButtonState.START; //Show Start Button
+
         } else {
           mqttConnection.currentShotClockDuration =
               Duration(seconds: shotClockseconds);
@@ -723,14 +939,57 @@ class _ControlButtonsState extends State<ControlButtons> {
           mqttConnection.client!.publishMessage("clock/quaters/seconds",
               MqttQos.exactlyOnce, mqttConnection.builder.payload!);
         }
-      } else {
+        return;
+      }
+
+      if (mqttConnection.currentQuatersClockDuration.inSeconds <= 24 &&
+          mqttConnection.currentShotClockDuration.inSeconds > 0) {
+        final shotClockseconds =
+            (mqttConnection.currentShotClockDuration.inSeconds > 0)
+                ? mqttConnection.currentShotClockDuration.inSeconds - 1
+                : 0;
         final quatersClockseconds =
-            mqttConnection.currentQuatersClockDuration.inSeconds - 1;
+            (mqttConnection.currentQuatersClockDuration.inSeconds > 0)
+                ? mqttConnection.currentQuatersClockDuration.inSeconds - 1
+                : 0;
+
+        if (shotClockseconds == 0) {
+          timer?.cancel();
+          _startPauseState = ButtonState.START; //Show Start Button
+        }
+        mqttConnection.currentShotClockDuration =
+            Duration(seconds: shotClockseconds);
+        mqttConnection.currentQuatersClockDuration =
+            Duration(seconds: quatersClockseconds);
+        //For Shot Clock
+        mqttConnection.builder = MqttClientPayloadBuilder();
+        mqttConnection.builder.addString(
+            mqttConnection.currentShotClockDuration.inSeconds.toString());
+        mqttConnection.client!.publishMessage(
+            "clock/shot", MqttQos.exactlyOnce, mqttConnection.builder.payload!);
+        // For Quaters Clock in minutes
+        mqttConnection.builder = MqttClientPayloadBuilder();
+        mqttConnection.builder.addString(
+            mqttConnection.currentQuatersClockDuration.inMinutes.toString());
+        mqttConnection.client!.publishMessage("clock/quaters/minutes",
+            MqttQos.exactlyOnce, mqttConnection.builder.payload!);
+        // For Quaters Clock in seconds
+        mqttConnection.builder = MqttClientPayloadBuilder();
+        mqttConnection.builder.addString(
+            mqttConnection.currentQuatersClockDuration.inSeconds.toString());
+        mqttConnection.client!.publishMessage("clock/quaters/seconds",
+            MqttQos.exactlyOnce, mqttConnection.builder.payload!);
+
+        return;
+      }
+      if (mqttConnection.currentQuatersClockDuration.inSeconds == 24 &&
+          mqttConnection.currentShotClockDuration.inSeconds == 0) {
         final shotClockseconds = 0;
-
-        if (quatersClockseconds < 0 || shotClockseconds < 0) {
+        final quatersClockseconds =
+            mqttConnection.currentQuatersClockDuration.inSeconds - 1;
+        if (!quatersClockOverShotClock) {
           timer?.cancel();
-          _startPauseState = ButtonState.DISABLE; //Show Start Button
+          _startPauseState = ButtonState.START; //Show Start Button
         } else {
           mqttConnection.currentShotClockDuration =
               Duration(seconds: shotClockseconds);
@@ -755,6 +1014,43 @@ class _ControlButtonsState extends State<ControlButtons> {
           mqttConnection.client!.publishMessage("clock/quaters/seconds",
               MqttQos.exactlyOnce, mqttConnection.builder.payload!);
         }
+        quatersClockOverShotClock = !quatersClockOverShotClock;
+        return;
+      }
+      if (mqttConnection.currentQuatersClockDuration.inSeconds < 24 &&
+          mqttConnection.currentShotClockDuration.inSeconds == 0) {
+        final shotClockseconds = 0;
+        final quatersClockseconds =
+            mqttConnection.currentQuatersClockDuration.inSeconds - 1;
+
+        if (quatersClockseconds == 0) {
+          timer?.cancel();
+          _startPauseState = ButtonState.DISABLE; //Disable Start Button
+        }
+        mqttConnection.currentShotClockDuration =
+            Duration(seconds: shotClockseconds);
+        mqttConnection.currentQuatersClockDuration =
+            Duration(seconds: quatersClockseconds);
+        //For Shot Clock
+        mqttConnection.builder = MqttClientPayloadBuilder();
+        mqttConnection.builder.addString(
+            mqttConnection.currentShotClockDuration.inSeconds.toString());
+        mqttConnection.client!.publishMessage(
+            "clock/shot", MqttQos.exactlyOnce, mqttConnection.builder.payload!);
+        // For Quaters Clock in minutes
+        mqttConnection.builder = MqttClientPayloadBuilder();
+        mqttConnection.builder.addString(
+            mqttConnection.currentQuatersClockDuration.inMinutes.toString());
+        mqttConnection.client!.publishMessage("clock/quaters/minutes",
+            MqttQos.exactlyOnce, mqttConnection.builder.payload!);
+        // For Quaters Clock in seconds
+        mqttConnection.builder = MqttClientPayloadBuilder();
+        mqttConnection.builder.addString(
+            mqttConnection.currentQuatersClockDuration.inSeconds.toString());
+        mqttConnection.client!.publishMessage("clock/quaters/seconds",
+            MqttQos.exactlyOnce, mqttConnection.builder.payload!);
+
+        return;
       }
     });
   }
@@ -768,3 +1064,4 @@ class _ControlButtonsState extends State<ControlButtons> {
 }
 
 enum ButtonState { START, PAUSE, DISABLE }
+enum WasConnected { NEVER, BEFORE }

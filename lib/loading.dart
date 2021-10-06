@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
+// import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 // import 'MQTTConnection.dart';
 
@@ -13,15 +13,12 @@ class Loading extends StatefulWidget {
 class _LoadingState extends State<Loading> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Container(
-          child: Center(
-            child: SpinKitChasingDots(
-              color: Colors.black,
-              size: 150.0,
-            ),
-          ),
+    return Container(
+      width: 20,
+      height: 20,
+      child: Center(
+        child: CircularProgressIndicator(
+          semanticsLabel: 'Linear progress indicator',
         ),
       ),
     );

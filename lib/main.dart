@@ -6,7 +6,10 @@ import 'package:wakelock/wakelock.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([DeviceOrientation.landscapeLeft])
-      .then((_) => runApp(MyApp()));
+      .then((_) => runApp(MyApp()))
+      .catchError((e) {
+    print('Ivan: $e');
+  });
 }
 
 class MyApp extends StatelessWidget {
