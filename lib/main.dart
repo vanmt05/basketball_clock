@@ -1,4 +1,4 @@
-import 'package:button_demo/control_buttons.dart';
+import 'package:basketball_clock/control_buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:wakelock/wakelock.dart';

@@ -32,7 +32,7 @@ class MQTTConnection {
 // MQTT Logic
   Future<int?> connectclient() async {
     client!.logging(on: false);
-    client!.keepAlivePeriod = 720;
+    client!.keepAlivePeriod = 60;
     client!.autoReconnect = true;
     client!.onAutoReconnect = onAutoReconnect;
     client!.onAutoReconnected = onAutoReconnected;

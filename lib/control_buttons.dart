@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:ui';
-import 'package:button_demo/loading.dart';
+import 'package:basketball_clock/loading.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:flutter/material.dart';
 import 'package:segment_display/segment_display.dart';
-import 'package:button_demo/MQTTConnection.dart';
+import 'package:basketball_clock/MQTTConnection.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 class ControlButtons extends StatefulWidget {
@@ -13,7 +13,7 @@ class ControlButtons extends StatefulWidget {
 }
 
 class _ControlButtonsState extends State<ControlButtons> {
-  final Duration defaultQuatersDuration = Duration(seconds: 48);
+  final Duration defaultQuatersDuration = Duration(minutes: 12);
   final Duration defaultShotClockDuration = Duration(seconds: 24);
 
   Timer? timer;
@@ -109,52 +109,54 @@ class _ControlButtonsState extends State<ControlButtons> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Control Buttons'),
-      ),
-      body: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) {
-            relativeWidthConstraints =
-                constraints.maxWidth / 3; //For body divided by 3
-            relativeHeightConstraints = constraints.maxHeight;
+      // appBar: AppBar(
+      //   title: Text('Control Buttons'),
+      // ),
+      body: SafeArea(
+        child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints constraints) {
+              relativeWidthConstraints =
+                  constraints.maxWidth / 3; //For body divided by 3
+              relativeHeightConstraints = constraints.maxHeight;
 
-            return Container(
-              child: Row(
-                children: [
-                  Flexible(
-                    child: Container(
-                        width: relativeWidthConstraints!,
-                        height: relativeHeightConstraints!,
-                        child:
-                            Column(children: [Spacer(), _startPauseButton()])),
-                  ),
-                  Flexible(
-                    child: Container(
-                      width: relativeWidthConstraints,
-                      child: Column(
-                        children: [
-                          _quatersClockWidget(),
-                          _shotClockWidget(),
-                          _soundFourteenSecondsWidget(),
-                        ],
+              return Container(
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Container(
+                          width: relativeWidthConstraints!,
+                          height: relativeHeightConstraints!,
+                          child: Column(
+                              children: [Spacer(), _startPauseButton()])),
+                    ),
+                    Flexible(
+                      child: Container(
+                        width: relativeWidthConstraints,
+                        child: Column(
+                          children: [
+                            _quatersClockWidget(),
+                            _shotClockWidget(),
+                            _soundFourteenSecondsWidget(),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  Flexible(
-                    child: Container(
-                        width: relativeWidthConstraints!,
-                        height: relativeHeightConstraints!,
-                        child: Column(children: [
-                          Spacer(),
-                          _resetButton(),
-                        ])),
-                  ),
-                ],
-              ),
-            );
-          })),
+                    Flexible(
+                      child: Container(
+                          width: relativeWidthConstraints!,
+                          height: relativeHeightConstraints!,
+                          child: Column(children: [
+                            Spacer(),
+                            _resetButton(),
+                          ])),
+                    ),
+                  ],
+                ),
+              );
+            })),
+      ),
     );
   }
 
