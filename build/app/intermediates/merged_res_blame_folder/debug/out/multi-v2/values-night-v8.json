@@ -1,0 +1,28 @@
+{
+    "logs": [
+        {
+            "outputFile": "C:\\Users\\ivand\\Documents\\basketball_clock\\build\\app\\intermediates\\incremental\\mergeDebugResources\\merged.dir\\values-night-v8\\values-night-v8.xml",
+            "map": [
+                {
+                    "source": "C:\\Users\\ivand\\Documents\\basketball_clock\\android\\app\\src\\main\\res\\values-night\\styles.xml",
+                    "from": {
+                        "startLines": "3,15",
+                        "startColumns": "4,4",
+                        "startOffsets": "172,879",
+                        "endLines": "8,17",
+                        "endColumns": "12,12",
+                        "endOffsets": "523,1043"
+                    },
+                    "to": {
+                        "startLines": "2,8",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,410",
+                        "endLines": "7,10",
+                        "endColumns": "12,12",
+                        "endOffsets": "405,574"
+                    }
+                }
+            ]
+        }
+    ]
+}

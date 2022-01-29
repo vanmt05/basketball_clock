@@ -1,4 +1,4 @@
-import 'package:basketball_clock/control_buttons.dart';
+import 'package:basketball_clock/screens/home.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:wakelock/wakelock.dart';
@@ -41,6 +41,6 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
-    return ControlButtons();
+    return Home();
   }
 }
