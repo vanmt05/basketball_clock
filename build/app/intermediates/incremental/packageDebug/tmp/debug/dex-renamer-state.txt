@@ -1,4 +1,0 @@
-#Fri Jan 28 21:03:17 BOT 2022
-base.0=C\:\\Users\\ivand\\Documents\\basketball_clock\\build\\app\\intermediates\\dex\\debug\\mergeDexDebug\\classes.dex
-renamed.0=classes.dex
-path.0=classes.dex
