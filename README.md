@@ -1,8 +1,12 @@
 # Basketball Clock
 
-![Project Image](project-image-url)
+![Project Image](https://github.com/vanmt05/basketball_clock/blob/push_to_github/project-image/basketball_clock_screenshot1.jpg)
 
-![Project Image](project-image-url)
+![Project Image](https://github.com/vanmt05/basketball_clock/blob/push_to_github/project-image/basketball_clock_screenshot2.jpg)
+
+![Project Image](https://github.com/vanmt05/basketball_clock/blob/push_to_github/project-image/basketball_clock_photo_1.jpg)
+
+![Project Image](https://github.com/vanmt05/basketball_clock/blob/push_to_github/project-image/basketball_clock_photo_2.jpg)
 
 ---
 
@@ -89,6 +93,3 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 [Back To The Top](#basketball-clock)
 
 ---
-
-
-
