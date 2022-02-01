@@ -8,7 +8,7 @@ import 'package:segment_display/segment_display.dart';
 import 'package:basketball_clock/services/MQTTConnection.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
-import 'package:network_info_plus/network_info_plus.dart';
+// import 'package:network_info_plus/network_info_plus.dart';
 import 'package:flutter/services.dart';
 
 class ButtonsControl extends StatefulWidget {
@@ -41,9 +41,12 @@ class _ButtonsControlState extends State<ButtonsControl> {
   void initState() {
     super.initState();
     // SystemChrome.setEnabledSystemUIMode(SystemUiMode.leanBack);
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [
-      SystemUiOverlay.bottom, //This line is used for showing the bottom bar
-    ]);
+    // SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [
+    //   SystemUiOverlay.bottom, //This line is used for showing the bottom bar
+    // ]);
+    SystemChrome.setSystemUIOverlayStyle(
+        SystemUiOverlayStyle(statusBarColor: Colors.transparent));
+
     wifiConnection = Connectivity()
         .onConnectivityChanged
         .listen((ConnectivityResult result) async {
@@ -93,15 +96,9 @@ class _ButtonsControlState extends State<ButtonsControl> {
     super.dispose();
     // print('dispose');
     wifiConnection.cancel();
-    // if (mqttConnection.client?.connectionStatus?.state ==
-    //     MqttConnectionState.connected) {
-    //   resumeSubscription.cancel();
-    // }
 
     timer?.cancel();
-    mqttConnection.client!.disconnect();
-    // mqttConnection =
-    //     new MQTTConnection(defaultQuatersDuration, defaultShotClockDuration);
+    mqttConnection.client?.disconnect();
 
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
         overlays: SystemUiOverlay.values); // to re-show bars
@@ -112,27 +109,27 @@ class _ButtonsControlState extends State<ButtonsControl> {
     // print(_wasConnected);
     // print('isConnectedWifi $isConnectedWifi');
 
-    // if ((mqttConnection.client?.connectionStatus?.state ==
-    //     MqttConnectionState.connecting)) {
-    //   Future.delayed(const Duration(milliseconds: 1000), () {
-    //     final snackBar = SnackBar(
-    //         duration: Duration(seconds: 1),
-    //         content: Row(
-    //           children: [
-    //             Text(
-    //               'Connecting',
-    //               style: TextStyle(fontSize: 25),
-    //             ),
-    //             SizedBox(
-    //               width: 10,
-    //             ),
-    //             Loading()
-    //           ],
-    //         ));
-    //     ScaffoldMessenger.of(context).showSnackBar(snackBar);
-    //     setState(() {});
-    //   });
-    // }
+    if ((mqttConnection.client?.connectionStatus?.state ==
+        MqttConnectionState.connecting)) {
+      Future.delayed(const Duration(milliseconds: 1000), () {
+        final snackBar = SnackBar(
+            duration: Duration(seconds: 1),
+            content: Row(
+              children: [
+                Text(
+                  'Connecting',
+                  style: TextStyle(fontSize: 25),
+                ),
+                SizedBox(
+                  width: 10,
+                ),
+                Loading()
+              ],
+            ));
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+        setState(() {});
+      });
+    }
     // print(
     //     'currentQuatersClockDuration ${mqttConnection.currentQuatersClockDuration}');
     // print(
@@ -142,52 +139,55 @@ class _ButtonsControlState extends State<ButtonsControl> {
     // print('resumeShotClockDuration ${mqttConnection.resumeShotClockDuration}');
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.orangeAccent,
+        backgroundColor: Color(0xffDC330D),
         title: Text('Buttons control'),
       ),
-      body: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) {
-            relativeWidthConstraints =
-                constraints.maxWidth / 3; //Body divided by 3
-            relativeHeightConstraints = constraints.maxHeight;
+      body: Container(
+        color: Color(0xffEADCD6),
+        child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints constraints) {
+              relativeWidthConstraints =
+                  constraints.maxWidth / 3; //Body divided by 3
+              relativeHeightConstraints = constraints.maxHeight;
 
-            return Container(
-              child: Row(
-                children: [
-                  Flexible(
-                    child: Container(
-                        width: relativeWidthConstraints!,
-                        height: relativeHeightConstraints!,
-                        child:
-                            Column(children: [Spacer(), _startPauseButton()])),
-                  ),
-                  Flexible(
-                    child: Container(
-                      width: relativeWidthConstraints,
-                      child: Column(
-                        children: [
-                          _quatersClockWidget(),
-                          _shotClockWidget(),
-                          _soundFourteenSecondsWidget(),
-                        ],
+              return Container(
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Container(
+                          width: relativeWidthConstraints!,
+                          height: relativeHeightConstraints!,
+                          child: Column(
+                              children: [Spacer(), _startPauseButton()])),
+                    ),
+                    Flexible(
+                      child: Container(
+                        width: relativeWidthConstraints,
+                        child: Column(
+                          children: [
+                            _quatersClockWidget(),
+                            _shotClockWidget(),
+                            _soundFourteenSecondsWidget(),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  Flexible(
-                    child: Container(
-                        width: relativeWidthConstraints!,
-                        height: relativeHeightConstraints!,
-                        child: Column(children: [
-                          Spacer(),
-                          _resetButton(),
-                        ])),
-                  ),
-                ],
-              ),
-            );
-          })),
+                    Flexible(
+                      child: Container(
+                          width: relativeWidthConstraints!,
+                          height: relativeHeightConstraints!,
+                          child: Column(children: [
+                            Spacer(),
+                            _resetButton(),
+                          ])),
+                    ),
+                  ],
+                ),
+              );
+            })),
+      ),
     );
   }
 
