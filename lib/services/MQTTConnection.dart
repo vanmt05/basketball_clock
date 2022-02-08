@@ -1,45 +1,47 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:basketball_clock/services/ClockBaseClass.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 
-class MQTTConnection {
+class MQTTConnection extends ClockBase {
   // String _connectionStatus = 'Unknown';
-  String? wifiName;
-  String? wifiGateway;
-  MqttServerClient? client;
-  Duration currentQuatersClockDuration = Duration(seconds: 0);
-  Duration currentShotClockDuration = Duration(seconds: 0);
-  int? resumeQuatersClockMinutes = 0;
-  int? resumeQuatersClockSeconds = 0;
-  int? resumeShotClockDuration = 0;
+  static final MQTTConnection _instance = MQTTConnection._internal();
 
-  bool resumeClock = false;
+  String? _wifiName;
+  String? _wifiGateway;
+  MqttServerClient? client;
 
   MqttClientPayloadBuilder builder = MqttClientPayloadBuilder();
   final NetworkInfo _networkInfo = NetworkInfo();
-  StreamController<MqttConnectionState> _streamConnController =
-      StreamController();
 
-  Stream<MqttConnectionState> get streamConn => _streamConnController.stream;
+  factory MQTTConnection() {
+    return _instance;
+  }
 
-  MQTTConnection();
+  MQTTConnection._internal() {
+    currentQuatersClock = Duration(seconds: 0);
+    currentShotClock = Duration(seconds: 0);
+    resumeClock = false;
+    resumeQuatersClockMinutes = 0;
+    resumeQuatersClockSeconds = 0;
+    resumeShotClockDuration = 0;
+  }
 
   Future<Map<String, dynamic>> initNetworkInfo() async {
-    wifiName = await _networkInfo.getWifiName();
-    wifiGateway = await _networkInfo.getWifiGatewayIP();
-    print('$wifiGateway init');
-    client = MqttServerClient('$wifiGateway', '');
-    return {'wifiName': wifiName, 'wifiGateway': wifiGateway};
+    _wifiName = await _networkInfo.getWifiName();
+    _wifiGateway = await _networkInfo.getWifiGatewayIP();
+    print('$_wifiGateway init');
+    client = MqttServerClient('$_wifiGateway', '');
+    return {'wifiName': _wifiName, 'wifiGateway': _wifiGateway};
   }
 
 // MQTT Logic
   Future<int?> connectclient() async {
     client!.logging(on: false);
     client!.keepAlivePeriod = 60;
-    // client!.autoReconnect = true;
     client!.onAutoReconnect = onAutoReconnect;
     client!.onAutoReconnected = onAutoReconnected;
     client!.onConnected = onConnected;
@@ -61,7 +63,7 @@ class MQTTConnection {
     } on SocketException catch (e) {
       print('Error: ${e.osError!.message}');
       if (e.osError!.message == "Connection refused") {
-        wifiGateway = null;
+        _wifiGateway = null;
       } else if (e.osError!.message == "Software caused connection abort") {}
       client!.disconnect();
     } on NoConnectionException catch (e) {
@@ -120,24 +122,6 @@ class MQTTConnection {
           // }
         }
 
-        // For Quaters Clock
-        // if (currentQuatersClockDuration >
-        //     Duration(
-        //         minutes: resumeQuatersClockMinutes!,
-        //         seconds: resumeQuatersClockSeconds!)) {
-        //   currentQuatersClockDuration = currentQuatersClockDuration;
-        // } else {
-        //   currentQuatersClockDuration = Duration(
-        //       minutes: resumeQuatersClockMinutes!,
-        //       seconds: resumeQuatersClockSeconds!);
-        // }
-
-        //For Shot Clock
-        // currentShotClockDuration = currentShotClockDuration >
-        //         Duration(seconds: resumeShotClockDuration!)
-        //     ? currentShotClockDuration
-        //     : Duration(seconds: resumeShotClockDuration!);
-
         if (currentQuatersClockDuration > Duration(seconds: 0) &&
             currentShotClockDuration > Duration(seconds: 0)) {
           builder = MqttClientPayloadBuilder();
@@ -191,33 +175,18 @@ class MQTTConnection {
 
       // exit(-1);
     }
-
-    //For Shot Clock
-    // builder = MqttClientPayloadBuilder();
-    // builder.addString(currentShotClockDuration.inSeconds.toString());
-    // client!.publishMessage("clock/shot", MqttQos.atLeastOnce, builder.payload!);
-    // // For Quaters Clock in minutes
-    // builder = MqttClientPayloadBuilder();
-    // builder.addString(currentQuatersClockDuration.inMinutes.toString());
-    // client!.publishMessage(
-    //     "clock/quaters/minutes", MqttQos.atLeastOnce, builder.payload!);
-    // // For Quaters Clock in seconds
-    // builder = MqttClientPayloadBuilder();
-    // builder.addString(currentQuatersClockDuration.inSeconds.toString());
-    // client!.publishMessage(
-    //     "clock/quaters/seconds", MqttQos.atLeastOnce, builder.payload!);
   }
 
   /// The subscribed callback
   void onSubscribed(String topic) {
-    _streamConnController.add(client!.connectionStatus!.state);
+    // _streamConnController.add(_client!.connectionStatus!.state);
 
     print('EXAMPLE::Subscription confirmed for topic $topic');
   }
 
   /// The unsolicited disconnect callback
   void onDisconnected() {
-    _streamConnController.add(client!.connectionStatus!.state);
+    // _streamConnController.add(_client!.connectionStatus!.state);
 
     print('EXAMPLE::OnDisconnected client callback - Client disconnection');
     if (client!.connectionStatus!.returnCode ==
@@ -231,7 +200,7 @@ class MQTTConnection {
 
   /// The successful connect callback
   void onConnected() {
-    _streamConnController.add(client!.connectionStatus!.state);
+    // _streamConnController.add(_client!.connectionStatus!.state);
 
     // if (resumeClock) {
     // print('resumeClock');
@@ -282,7 +251,7 @@ class MQTTConnection {
   }
 
   void onAutoReconnect() {
-    _streamConnController.add(client!.connectionStatus!.state);
+    // _streamConnController.add(_client!.connectionStatus!.state);
 
     print(
         'EXAMPLE::onAutoReconnect client callback - Client auto reconnection sequence will start');

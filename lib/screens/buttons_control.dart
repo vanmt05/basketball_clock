@@ -1,14 +1,11 @@
 import 'dart:async';
-// import 'dart:ui';
 import 'package:basketball_clock/shared/loading.dart';
-import 'package:mqtt_client/mqtt_client.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:mqtt_client/mqtt_client.dart';
 import 'package:segment_display/segment_display.dart';
 import 'package:basketball_clock/services/MQTTConnection.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
-// import 'package:network_info_plus/network_info_plus.dart';
 import 'package:flutter/services.dart';
 
 class ButtonsControl extends StatefulWidget {
@@ -44,8 +41,9 @@ class _ButtonsControlState extends State<ButtonsControl> {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [
       SystemUiOverlay.bottom, //This line is used for showing the bottom bar
     ]);
-    SystemChrome.setSystemUIOverlayStyle(
-        SystemUiOverlayStyle(statusBarColor: Colors.transparent));
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+        statusBarColor:
+            Colors.transparent)); //This line is used for transparent status bar
 
     wifiConnection = Connectivity()
         .onConnectivityChanged
@@ -67,21 +65,9 @@ class _ButtonsControlState extends State<ButtonsControl> {
                 }
               }));
         });
-        // }
-        // if (_wasConnected == WasConnected.BEFORE) {
-        //   mqttConnection.initNetworkInfo();
-        //   // setState(() {
-        //   //   mqttConnection.client?.autoReconnect = true;
-        //   // });
-        // }
-
       }
 
       if (result == ConnectivityResult.none) {
-        // setState(() {
-        //   mqttConnection.client?.autoReconnect = true;
-        // });
-
         setState(() {
           isConnectedWifi = false;
           stopTimer(resets: false);
@@ -439,41 +425,47 @@ class _ButtonsControlState extends State<ButtonsControl> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // (+) Minutes
-                IconButton(
-                  disabledColor: Colors.grey[350],
-                  splashColor: Colors.green,
-                  splashRadius: 20,
-                  iconSize: 35,
-                  onPressed: () {
-                    if (mqttConnection.client?.connectionStatus?.state ==
-                            MqttConnectionState.connected &&
-                        isConnectedWifi) {
-                      addMinutes();
-                    } else {
-                      return null;
-                    }
-                  },
-                  icon: Icon(
-                    Icons.add_circle_outline_outlined,
+                Material(
+                  color: Colors.transparent,
+                  child: IconButton(
+                    disabledColor: Colors.grey[350],
+                    splashColor: Colors.green,
+                    splashRadius: 18,
+                    iconSize: 35,
+                    onPressed: () {
+                      if (mqttConnection.client?.connectionStatus?.state ==
+                              MqttConnectionState.connected &&
+                          isConnectedWifi) {
+                        addMinutes();
+                      } else {
+                        return null;
+                      }
+                    },
+                    icon: Icon(
+                      Icons.add_circle_outline_outlined,
+                    ),
                   ),
                 ),
                 // (-) Minutes
-                IconButton(
-                  disabledColor: Colors.grey[350],
-                  splashColor: Colors.red,
-                  splashRadius: 20,
-                  iconSize: 35,
-                  onPressed: () {
-                    if (mqttConnection.client?.connectionStatus?.state ==
-                            MqttConnectionState.connected &&
-                        isConnectedWifi) {
-                      removeMinutes();
-                    } else {
-                      return null;
-                    }
-                  },
-                  icon: Icon(
-                    Icons.remove_circle_outline_outlined,
+                Material(
+                  color: Colors.transparent,
+                  child: IconButton(
+                    disabledColor: Colors.grey[350],
+                    splashColor: Colors.red,
+                    splashRadius: 18,
+                    iconSize: 35,
+                    onPressed: () {
+                      if (mqttConnection.client?.connectionStatus?.state ==
+                              MqttConnectionState.connected &&
+                          isConnectedWifi) {
+                        removeMinutes();
+                      } else {
+                        return null;
+                      }
+                    },
+                    icon: Icon(
+                      Icons.remove_circle_outline_outlined,
+                    ),
                   ),
                 ),
               ],
@@ -491,41 +483,47 @@ class _ButtonsControlState extends State<ButtonsControl> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // (+) Seconds
-                IconButton(
-                  disabledColor: Colors.grey[350],
-                  splashColor: Colors.green,
-                  splashRadius: 20,
-                  iconSize: 30,
-                  onPressed: () {
-                    if (mqttConnection.client?.connectionStatus?.state ==
-                            MqttConnectionState.connected &&
-                        isConnectedWifi) {
-                      addSeconds('quatersClock');
-                    } else {
-                      setState(() {});
-                    }
-                  },
-                  icon: Icon(
-                    Icons.add_circle_outline_outlined,
+                Material(
+                  color: Colors.transparent,
+                  child: IconButton(
+                    disabledColor: Colors.grey[350],
+                    splashColor: Colors.green,
+                    splashRadius: 18,
+                    iconSize: 35,
+                    onPressed: () {
+                      if (mqttConnection.client?.connectionStatus?.state ==
+                              MqttConnectionState.connected &&
+                          isConnectedWifi) {
+                        addSeconds('quatersClock');
+                      } else {
+                        setState(() {});
+                      }
+                    },
+                    icon: Icon(
+                      Icons.add_circle_outline_outlined,
+                    ),
                   ),
                 ),
                 // (-) Seconds
-                IconButton(
-                  disabledColor: Colors.grey[350],
-                  splashColor: Colors.red,
-                  splashRadius: 20,
-                  iconSize: 30,
-                  onPressed: () {
-                    if (mqttConnection.client?.connectionStatus?.state ==
-                            MqttConnectionState.connected &&
-                        isConnectedWifi) {
-                      removeSeconds('quatersClock');
-                    } else {
-                      setState(() {});
-                    }
-                  },
-                  icon: Icon(
-                    Icons.remove_circle_outline_outlined,
+                Material(
+                  color: Colors.transparent,
+                  child: IconButton(
+                    disabledColor: Colors.grey[350],
+                    splashColor: Colors.red,
+                    splashRadius: 18,
+                    iconSize: 35,
+                    onPressed: () {
+                      if (mqttConnection.client?.connectionStatus?.state ==
+                              MqttConnectionState.connected &&
+                          isConnectedWifi) {
+                        removeSeconds('quatersClock');
+                      } else {
+                        setState(() {});
+                      }
+                    },
+                    icon: Icon(
+                      Icons.remove_circle_outline_outlined,
+                    ),
                   ),
                 ),
               ],
@@ -545,23 +543,27 @@ class _ButtonsControlState extends State<ButtonsControl> {
         child: FittedBox(
       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         // (-) Seconds
-        IconButton(
-          disabledColor: Colors.grey[350],
-          splashColor: Colors.red,
-          splashRadius: 30,
-          iconSize: 60,
-          onPressed: () {
-            if (mqttConnection.client?.connectionStatus?.state ==
-                    MqttConnectionState.connected &&
-                isConnectedWifi &&
-                mqttConnection.currentQuatersClockDuration.inSeconds > 24) {
-              removeSeconds('shotClock');
-            } else {
-              setState(() {});
-            }
-          },
-          icon: Icon(
-            Icons.remove_circle_outline_outlined,
+        Material(
+          color: Colors.transparent,
+          child: IconButton(
+            disabledColor: Colors.grey[350],
+            splashColor: Colors.red,
+            // highlightColor: Colors.blue,
+            splashRadius: 30,
+            iconSize: 60,
+            onPressed: () {
+              if (mqttConnection.client?.connectionStatus?.state ==
+                      MqttConnectionState.connected &&
+                  isConnectedWifi &&
+                  mqttConnection.currentQuatersClockDuration.inSeconds > 24) {
+                removeSeconds('shotClock');
+              } else {
+                setState(() {});
+              }
+            },
+            icon: Icon(
+              Icons.remove_circle_outline_outlined,
+            ),
           ),
         ),
         // Display
@@ -572,23 +574,26 @@ class _ButtonsControlState extends State<ButtonsControl> {
         ),
 
         // (+) Seconds
-        IconButton(
-          disabledColor: Colors.grey[350],
-          splashColor: Colors.green,
-          splashRadius: 30,
-          iconSize: 60,
-          onPressed: () {
-            if (mqttConnection.client?.connectionStatus?.state ==
-                    MqttConnectionState.connected &&
-                isConnectedWifi &&
-                mqttConnection.currentQuatersClockDuration.inSeconds > 24) {
-              addSeconds('shotClock');
-            } else {
-              setState(() {});
-            }
-          },
-          icon: Icon(
-            Icons.add_circle_outline_outlined,
+        Material(
+          color: Colors.transparent,
+          child: IconButton(
+            disabledColor: Colors.grey[350],
+            splashColor: Colors.green,
+            splashRadius: 30,
+            iconSize: 60,
+            onPressed: () {
+              if (mqttConnection.client?.connectionStatus?.state ==
+                      MqttConnectionState.connected &&
+                  isConnectedWifi &&
+                  mqttConnection.currentQuatersClockDuration.inSeconds > 24) {
+                addSeconds('shotClock');
+              } else {
+                setState(() {});
+              }
+            },
+            icon: Icon(
+              Icons.add_circle_outline_outlined,
+            ),
           ),
         ),
       ]),
