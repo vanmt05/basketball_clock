@@ -16,10 +16,7 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-// ...
-
-// The following line will enable the Android and iOS wakelock.
-    Wakelock.enable();
+    Wakelock.enable(); // Enable the Android and iOS wakelock.
     return MaterialApp(
       title: 'Buttons With Icons',
       theme: ThemeData(
