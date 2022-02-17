@@ -15,7 +15,7 @@ class _HomeState extends State<Home> {
   void initState() {
     super.initState();
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
+      statusBarColor: Colors.transparent, //Set transparent status bar 
     ));
   }
 
@@ -28,16 +28,12 @@ class _HomeState extends State<Home> {
           child: Row(
             children: [
               Expanded(
-                child: Container(
-                    // color: Colors.red,
-                    ),
+                child: Container(),
               ),
               Column(
                 children: [
                   Expanded(
-                    child: Container(
-                      color: Colors.blue,
-                    ),
+                    child: Container(),
                   ),
                   TextButton(
                       style: ButtonStyle(
