@@ -1,12 +1,10 @@
 # Basketball Clock
 
-![Project Image](https://github.com/vanmt05/basketball_clock/blob/push_to_github/project-image/basketball_clock_screenshot1.jpg)
+![Project Image](https://github.com/vanmt05/basketball_clock/blob/main/project-image/basketball_clock_photo_1.jpg)
 
-![Project Image](https://github.com/vanmt05/basketball_clock/blob/push_to_github/project-image/basketball_clock_screenshot2.jpg)
+![Project Image](https://github.com/vanmt05/basketball_clock/blob/main/project-image/basketball_clock_photo_2.jpg)
 
-![Project Image](https://github.com/vanmt05/basketball_clock/blob/push_to_github/project-image/basketball_clock_photo_1.jpg)
-
-![Project Image](https://github.com/vanmt05/basketball_clock/blob/push_to_github/project-image/basketball_clock_photo_2.jpg)
+![Project Image](https://github.com/vanmt05/basketball_clock/blob/main/project-image/basketball_clock_photo_3.jpg)
 
 ---
 
